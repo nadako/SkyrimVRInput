@@ -1,0 +1,769 @@
+{
+  "action_manifest_version" : 1,
+  "alias_info" : {},
+  "app_key" : "steam.app.611670",
+  "bindings" : {
+	"/actions/gameplay" : {
+	  "haptics" : [
+		{
+		  "output" : "/actions/gameplay/out/lefthaptic",
+		  "path" : "/user/hand/left/output/haptic"
+		},
+		{
+		  "output" : "/actions/gameplay/out/righthaptic",
+		  "path" : "/user/hand/right/output/haptic"
+		}
+	  ],
+	  "poses" : [],
+	  "skeleton" : [
+		{
+		  "output" : "/actions/gameplay/in/leftskeleton",
+		  "path" : "/user/hand/left/input/skeleton/left"
+		},
+		{
+		  "output" : "/actions/gameplay/in/rightskeleton",
+		  "path" : "/user/hand/right/input/skeleton/right"
+		}
+	  ],
+	  "sources" : [
+		{
+		  "inputs" : {
+			"click" : {
+			  "output" : "/actions/gameplay/in/shoutpower"
+			},
+			"position" : {
+			  "output" : "/actions/gameplay/in/turnjumpsneak"
+			},
+			"touch" : {
+			  "output" : "/actions/gameplay/in/rightthumbtouch"
+			}
+		  },
+		  "mode" : "joystick",
+		  "parameters" : {},
+		  "path" : "/user/hand/right/input/thumbstick"
+		},
+		{
+		  "inputs" : {
+			"click" : {
+			  "output" : "/actions/gameplay/in/sprint"
+			},
+			"position" : {
+			  "output" : "/actions/gameplay/in/move"
+			},
+			"touch" : {
+			  "output" : "/actions/gameplay/in/leftthumbtouch"
+			}
+		  },
+		  "mode" : "joystick",
+		  "parameters" : {},
+		  "path" : "/user/hand/left/input/thumbstick"
+		},
+		{
+		  "inputs" : {
+			"click" : {
+			  "output" : "/actions/gameplay/in/activate"
+			},
+			"touch" : {
+			  "output" : "/actions/gameplay/in/rightthumbtouch"
+			}
+		  },
+		  "mode" : "button",
+		  "parameters" : {},
+		  "path" : "/user/hand/right/input/a"
+		},
+		{
+		  "inputs" : {
+			"click" : {
+			  "output" : "/actions/gameplay/in/rightgrip"
+			},
+			"touch" : {
+			  "output" : "/actions/gameplay/in/rightgriptouch"
+			}
+		  },
+		  "mode" : "button",
+		  "parameters" : {},
+		  "path" : "/user/hand/right/input/grip"
+		},
+		{
+		  "inputs" : {
+			"click" : {
+			  "output" : "/actions/gameplay/in/leftgrip"
+			},
+			"touch" : {
+			  "output" : "/actions/gameplay/in/leftgriptouch"
+			}
+		  },
+		  "mode" : "button",
+		  "parameters" : {},
+		  "path" : "/user/hand/left/input/grip"
+		},
+		{
+		  "inputs" : {
+			"click" : {
+			  "output" : "/actions/gameplay/in/rightaxis3button"
+			},
+			"touch" : {
+			  "output" : "/actions/gameplay/in/righttriggertouch"
+			}
+		  },
+		  "mode" : "button",
+		  "parameters" : {},
+		  "path" : "/user/hand/right/input/bumper"
+		},
+		{
+		  "inputs" : {
+			"click" : {
+			  "output" : "/actions/gameplay/in/righttrigger"
+			},
+			"touch" : {
+			  "output" : "/actions/gameplay/in/righttriggertouch"
+			}
+		  },
+		  "mode" : "button",
+		  "parameters" : {},
+		  "path" : "/user/hand/right/input/trigger"
+		},
+		{
+		  "inputs" : {
+			"click" : {
+			  "output" : "/actions/gameplay/in/lefttrigger"
+			},
+			"touch" : {
+			  "output" : "/actions/gameplay/in/lefttriggertouch"
+			}
+		  },
+		  "mode" : "button",
+		  "parameters" : {},
+		  "path" : "/user/hand/left/input/trigger"
+		},
+		{
+		  "inputs" : {
+			"click" : {
+			  "output" : "/actions/gameplay/in/readyweapon"
+			},
+			"touch" : {
+			  "output" : "/actions/gameplay/in/rightthumbtouch"
+			}
+		  },
+		  "mode" : "button",
+		  "parameters" : {},
+		  "path" : "/user/hand/right/input/x"
+		},
+		{
+		  "inputs" : {
+			"click" : {
+			  "output" : "/actions/gameplay/in/tweenmenu"
+			},
+			"touch" : {
+			  "output" : "/actions/gameplay/in/leftthumbtouch"
+			}
+		  },
+		  "mode" : "button",
+		  "parameters" : {},
+		  "path" : "/user/hand/left/input/dpad_down"
+		},
+		{
+		  "inputs" : {
+			"click" : {
+			  "output" : "/actions/gameplay/in/journal"
+			}
+		  },
+		  "mode" : "button",
+		  "parameters" : {},
+		  "path" : "/user/hand/right/input/menu"
+		},
+		{
+		  "inputs" : {
+			"click" : {
+			  "output" : "/actions/gameplay/in/quicksave"
+			}
+		  },
+		  "mode" : "button",
+		  "parameters" : {},
+		  "path" : "/user/hand/left/input/view"
+		},
+		{
+		  "inputs" : {
+			"click" : {
+			  "output" : "/actions/gameplay/in/favorites"
+			},
+			"touch" : {
+			  "output" : "/actions/gameplay/in/rightthumbtouch"
+			}
+		  },
+		  "mode" : "button",
+		  "parameters" : {},
+		  "path" : "/user/hand/right/input/b"
+		},
+		{
+		  "inputs" : {
+			"click" : {
+			  "output" : "/actions/gameplay/in/leftaxis3button"
+			},
+			"touch" : {
+			  "output" : "/actions/gameplay/in/lefttriggertouch"
+			}
+		  },
+		  "mode" : "button",
+		  "parameters" : {},
+		  "path" : "/user/hand/left/input/bumper"
+		},
+		{
+		  "inputs" : {
+			"click" : {
+			  "output" : "/actions/gameplay/in/wait"
+			},
+			"touch" : {
+			  "output" : "/actions/gameplay/in/leftthumbtouch"
+			}
+		  },
+		  "mode" : "button",
+		  "parameters" : {},
+		  "path" : "/user/hand/left/input/dpad_up"
+		},
+		{
+		  "inputs" : {
+			"touch" : {
+			  "output" : "/actions/gameplay/in/rightthumbtouch"
+			}
+		  },
+		  "mode" : "button",
+		  "parameters" : {},
+		  "path" : "/user/hand/right/input/y"
+		},
+		{
+		  "inputs" : {
+			"touch" : {
+			  "output" : "/actions/gameplay/in/leftthumbtouch"
+			}
+		  },
+		  "mode" : "button",
+		  "parameters" : {},
+		  "path" : "/user/hand/left/input/dpad_left"
+		},
+		{
+		  "inputs" : {
+			"touch" : {
+			  "output" : "/actions/gameplay/in/leftthumbtouch"
+			}
+		  },
+		  "mode" : "button",
+		  "parameters" : {},
+		  "path" : "/user/hand/left/input/dpad_right"
+		}
+	  ]
+	},
+	"/actions/imgui" : {
+	  "poses" : [],
+	  "skeleton" : [],
+	  "sources" : [
+		{
+		  "inputs" : {
+			"click" : {
+			  "output" : "/actions/imgui/in/rightgrip"
+			}
+		  },
+		  "mode" : "button",
+		  "parameters" : {},
+		  "path" : "/user/hand/right/input/grip"
+		},
+		{
+		  "inputs" : {
+			"click" : {
+			  "output" : "/actions/imgui/in/leftgrip"
+			}
+		  },
+		  "mode" : "button",
+		  "parameters" : {},
+		  "path" : "/user/hand/left/input/grip"
+		},
+		{
+		  "inputs" : {
+			"click" : {
+			  "output" : "/actions/imgui/in/leftstickbutton"
+			},
+			"position" : {
+			  "output" : "/actions/imgui/in/leftstick"
+			}
+		  },
+		  "mode" : "joystick",
+		  "parameters" : {},
+		  "path" : "/user/hand/left/input/thumbstick"
+		},
+		{
+		  "inputs" : {
+			"click" : {
+			  "output" : "/actions/imgui/in/righttrigger"
+			}
+		  },
+		  "mode" : "button",
+		  "parameters" : {},
+		  "path" : "/user/hand/right/input/trigger"
+		},
+		{
+		  "inputs" : {
+			"click" : {
+			  "output" : "/actions/imgui/in/rightstickbutton"
+			}
+		  },
+		  "mode" : "button",
+		  "parameters" : {},
+		  "path" : "/user/hand/right/input/bumper"
+		},
+		{
+		  "inputs" : {
+			"click" : {
+			  "output" : "/actions/imgui/in/rightstickbutton"
+			},
+			"position" : {
+			  "output" : "/actions/imgui/in/rightstick"
+			}
+		  },
+		  "mode" : "joystick",
+		  "parameters" : {},
+		  "path" : "/user/hand/right/input/thumbstick"
+		},
+		{
+		  "inputs" : {
+			"click" : {
+			  "output" : "/actions/imgui/in/leftstickbutton"
+			}
+		  },
+		  "mode" : "button",
+		  "parameters" : {},
+		  "path" : "/user/hand/left/input/bumper"
+		},
+		{
+		  "inputs" : {
+			"click" : {
+			  "output" : "/actions/imgui/in/lefttrigger"
+			}
+		  },
+		  "mode" : "button",
+		  "parameters" : {},
+		  "path" : "/user/hand/left/input/trigger"
+		}
+	  ]
+	},
+	"/actions/lockpicking" : {
+	  "poses" : [],
+	  "skeleton" : [],
+	  "sources" : [
+		{
+		  "inputs" : {
+			"position" : {
+			  "output" : "/actions/lockpicking/in/rotatelock"
+			}
+		  },
+		  "mode" : "joystick",
+		  "parameters" : {},
+		  "path" : "/user/hand/right/input/thumbstick"
+		},
+		{
+		  "inputs" : {
+			"position" : {
+			  "output" : "/actions/lockpicking/in/rotatepick"
+			}
+		  },
+		  "mode" : "joystick",
+		  "parameters" : {},
+		  "path" : "/user/hand/left/input/thumbstick"
+		},
+		{
+		  "inputs" : {
+			"click" : {
+			  "output" : "/actions/lockpicking/in/cancel"
+			}
+		  },
+		  "mode" : "button",
+		  "parameters" : {},
+		  "path" : "/user/hand/right/input/grip"
+		},
+		{
+		  "inputs" : {
+			"click" : {
+			  "output" : "/actions/lockpicking/in/cancel"
+			}
+		  },
+		  "mode" : "button",
+		  "parameters" : {},
+		  "path" : "/user/hand/left/input/grip"
+		}
+	  ]
+	},
+	"/actions/map" : {
+	  "poses" : [],
+	  "skeleton" : [],
+	  "sources" : [
+		{
+		  "inputs" : {
+			"click" : {
+			  "output" : "/actions/map/in/click"
+			}
+		  },
+		  "mode" : "button",
+		  "parameters" : {},
+		  "path" : "/user/hand/right/input/trigger"
+		},
+		{
+		  "inputs" : {
+			"click" : {
+			  "output" : "/actions/map/in/exitmap"
+			}
+		  },
+		  "mode" : "button",
+		  "parameters" : {},
+		  "path" : "/user/hand/right/input/grip"
+		},
+		{
+		  "inputs" : {
+			"click" : {
+			  "output" : "/actions/map/in/click"
+			}
+		  },
+		  "mode" : "button",
+		  "parameters" : {},
+		  "path" : "/user/hand/right/input/a"
+		},
+		{
+		  "inputs" : {
+			"click" : {
+			  "output" : "/actions/map/in/exitmap"
+			}
+		  },
+		  "mode" : "button",
+		  "parameters" : {},
+		  "path" : "/user/hand/left/input/grip"
+		},
+		{
+		  "inputs" : {
+			"click" : {
+			  "output" : "/actions/map/in/localmap"
+			}
+		  },
+		  "mode" : "button",
+		  "parameters" : {},
+		  "path" : "/user/hand/right/input/b"
+		},
+		{
+		  "inputs" : {
+			"click" : {
+			  "output" : "/actions/map/in/playerposition"
+			},
+			"position" : {
+			  "output" : "/actions/map/in/move"
+			}
+		  },
+		  "mode" : "joystick",
+		  "parameters" : {},
+		  "path" : "/user/hand/left/input/thumbstick"
+		},
+		{
+		  "inputs" : {
+			"click" : {
+			  "output" : "/actions/map/in/playerposition"
+			},
+			"position" : {
+			  "output" : "/actions/map/in/turn"
+			}
+		  },
+		  "mode" : "joystick",
+		  "parameters" : {},
+		  "path" : "/user/hand/right/input/thumbstick"
+		},
+		{
+		  "inputs" : {
+			"click" : {
+			  "output" : "/actions/map/in/journal"
+			}
+		  },
+		  "mode" : "button",
+		  "parameters" : {},
+		  "path" : "/user/hand/right/input/menu"
+		}
+	  ]
+	},
+	"/actions/menu" : {
+	  "chords" : [],
+	  "poses" : [],
+	  "skeleton" : [],
+	  "sources" : [
+		{
+		  "inputs" : {
+			"click" : {
+			  "output" : "/actions/menu/in/accept"
+			}
+		  },
+		  "mode" : "button",
+		  "parameters" : {},
+		  "path" : "/user/hand/right/input/trigger"
+		},
+		{
+		  "inputs" : {
+			"click" : {
+			  "output" : "/actions/menu/in/accept"
+			}
+		  },
+		  "mode" : "button",
+		  "parameters" : {},
+		  "path" : "/user/hand/right/input/a"
+		},
+		{
+		  "inputs" : {
+			"east" : {
+			  "output" : "/actions/menu/in/right"
+			},
+			"north" : {
+			  "output" : "/actions/menu/in/up"
+			},
+			"south" : {
+			  "output" : "/actions/menu/in/down"
+			},
+			"west" : {
+			  "output" : "/actions/menu/in/left"
+			}
+		  },
+		  "mode" : "dpad",
+		  "parameters" : {
+			"sub_mode" : "touch"
+		  },
+		  "path" : "/user/hand/right/input/thumbstick"
+		},
+		{
+		  "inputs" : {
+			"click" : {
+			  "output" : "/actions/menu/in/cancel"
+			}
+		  },
+		  "mode" : "button",
+		  "parameters" : {},
+		  "path" : "/user/hand/right/input/grip"
+		},
+		{
+		  "inputs" : {
+			"click" : {
+			  "output" : "/actions/menu/in/equipright"
+			}
+		  },
+		  "mode" : "button",
+		  "parameters" : {},
+		  "path" : "/user/hand/right/input/trigger"
+		},
+		{
+		  "inputs" : {
+			"click" : {
+			  "output" : "/actions/menu/in/equipleft"
+			}
+		  },
+		  "mode" : "button",
+		  "parameters" : {},
+		  "path" : "/user/hand/left/input/trigger"
+		},
+		{
+		  "inputs" : {
+			"click" : {
+			  "output" : "/actions/menu/in/cancel"
+			}
+		  },
+		  "mode" : "button",
+		  "parameters" : {},
+		  "path" : "/user/hand/left/input/grip"
+		},
+		{
+		  "inputs" : {
+			"click" : {
+			  "output" : "/actions/menu/in/tabright"
+			}
+		  },
+		  "mode" : "button",
+		  "parameters" : {},
+		  "path" : "/user/hand/right/input/bumper"
+		},
+		{
+		  "inputs" : {
+			"click" : {
+			  "output" : "/actions/menu/in/tableft"
+			}
+		  },
+		  "mode" : "button",
+		  "parameters" : {},
+		  "path" : "/user/hand/left/input/bumper"
+		},
+		{
+		  "inputs" : {
+			"click" : {
+			  "output" : "/actions/menu/in/left"
+			}
+		  },
+		  "mode" : "button",
+		  "parameters" : {},
+		  "path" : "/user/hand/left/input/dpad_left"
+		},
+		{
+		  "inputs" : {
+			"click" : {
+			  "output" : "/actions/menu/in/right"
+			}
+		  },
+		  "mode" : "button",
+		  "parameters" : {},
+		  "path" : "/user/hand/left/input/dpad_right"
+		},
+		{
+		  "inputs" : {
+			"click" : {
+			  "output" : "/actions/menu/in/up"
+			}
+		  },
+		  "mode" : "button",
+		  "parameters" : {},
+		  "path" : "/user/hand/left/input/dpad_up"
+		},
+		{
+		  "inputs" : {
+			"click" : {
+			  "output" : "/actions/menu/in/actionb"
+			}
+		  },
+		  "mode" : "button",
+		  "parameters" : {},
+		  "path" : "/user/hand/right/input/b"
+		},
+		{
+		  "inputs" : {
+			"click" : {
+			  "output" : "/actions/menu/in/actiona"
+			}
+		  },
+		  "mode" : "button",
+		  "parameters" : {},
+		  "path" : "/user/hand/right/input/x"
+		},
+		{
+		  "inputs" : {
+			"click" : {
+			  "output" : "/actions/menu/in/chargeitem"
+			}
+		  },
+		  "mode" : "button",
+		  "parameters" : {},
+		  "path" : "/user/hand/right/input/y"
+		},
+		{
+		  "inputs" : {
+			"click" : {
+			  "output" : "/actions/menu/in/zoomitem"
+			}
+		  },
+		  "mode" : "button",
+		  "parameters" : {},
+		  "path" : "/user/hand/right/input/thumbstick"
+		},
+		{
+		  "inputs" : {
+			"east" : {
+			  "output" : "/actions/menu/in/right"
+			},
+			"north" : {
+			  "output" : "/actions/menu/in/up"
+			},
+			"south" : {
+			  "output" : "/actions/menu/in/down"
+			},
+			"west" : {
+			  "output" : "/actions/menu/in/left"
+			}
+		  },
+		  "mode" : "dpad",
+		  "parameters" : {
+			"sub_mode" : "touch"
+		  },
+		  "path" : "/user/hand/left/input/thumbstick"
+		},
+		{
+		  "inputs" : {
+			"click" : {
+			  "output" : "/actions/menu/in/down"
+			}
+		  },
+		  "mode" : "button",
+		  "parameters" : {},
+		  "path" : "/user/hand/left/input/dpad_down"
+		},
+		{
+		  "inputs" : {
+			"click" : {
+			  "output" : "/actions/menu/in/zoomitem"
+			}
+		  },
+		  "mode" : "toggle_button",
+		  "parameters" : {},
+		  "path" : "/user/hand/left/input/thumbstick"
+		},
+		{
+		  "inputs" : {
+			"click" : {
+			  "output" : "/actions/menu/in/openimgui"
+			}
+		  },
+		  "mode" : "button",
+		  "parameters" : {},
+		  "path" : "/user/hand/right/input/menu"
+		}
+	  ]
+	},
+	"/actions/skills" : {
+	  "poses" : [],
+	  "skeleton" : [],
+	  "sources" : [
+		{
+		  "inputs" : {
+			"position" : {
+			  "output" : "/actions/skills/in/navigate"
+			}
+		  },
+		  "mode" : "joystick",
+		  "parameters" : {},
+		  "path" : "/user/hand/right/input/thumbstick"
+		},
+		{
+		  "inputs" : {
+			"position" : {
+			  "output" : "/actions/skills/in/navigate"
+			}
+		  },
+		  "mode" : "joystick",
+		  "parameters" : {},
+		  "path" : "/user/hand/left/input/thumbstick"
+		},
+		{
+		  "inputs" : {
+			"click" : {
+			  "output" : "/actions/skills/in/select"
+			}
+		  },
+		  "mode" : "button",
+		  "parameters" : {},
+		  "path" : "/user/hand/right/input/trigger"
+		},
+		{
+		  "inputs" : {
+			"click" : {
+			  "output" : "/actions/skills/in/select"
+			}
+		  },
+		  "mode" : "button",
+		  "parameters" : {},
+		  "path" : "/user/hand/right/input/a"
+		}
+	  ]
+	}
+  },
+  "category" : "steamvr_input",
+  "controller_type" : "frame_controller",
+  "description" : "",
+  "interaction_profile" : "",
+  "name" : "Default Steam Frame bindings",
+  "options" : {},
+  "simulated_actions" : []
+}

@@ -1,0 +1,2 @@
+# Skyrim needs CRLF preserved for controlmapvr.txt
+data/Interface/Controls/PC/controlmapvr.txt text eol=crlf
