@@ -6,6 +6,7 @@
 
 namespace {
 	constexpr size_t slotIdx_BSOpenVR_ProcessVREvents = 11;
+	constexpr size_t slotIdx_ReadyWeaponHandler_ProcessButton = 6;
 	constexpr size_t slotIdx_IVRSystem_GetInt32TrackedDeviceProperty = 24;
 	constexpr size_t slotIdx_IVRSystem_GetUint64TrackedDeviceProperty = 25;
 	constexpr size_t slotIdx_IVRSystem_GetStringTrackedDeviceProperty = 28;
@@ -13,6 +14,7 @@ namespace {
 	constexpr size_t slotIdx_IVRSystem_TriggerHapticPulse = 36;
 
 	typedef void (*pfnProcessVREvents)(RE::BSOpenVR *);
+	typedef void (*pfnReadyWeaponProcessButton)(RE::ReadyWeaponHandler *, RE::ButtonEvent *, RE::PlayerControlsData *);
 	typedef bool (*pfnGetControllerState)(vrnew::IVRSystem *, vrnew::TrackedDeviceIndex_t, vrnew::VRControllerState_t *, uint32_t);
 	typedef void (*pfnTriggerHapticPulse)(vrnew::IVRSystem *, vrnew::TrackedDeviceIndex_t, uint32_t, unsigned short);
 	typedef int32_t (*pfnGetInt32TrackedDeviceProperty)(vrnew::IVRSystem *, vrnew::TrackedDeviceIndex_t, vrnew::ETrackedDeviceProperty, vrnew::ETrackedPropertyError *);
@@ -20,15 +22,39 @@ namespace {
 	typedef uint32_t (*pfnGetStringTrackedDeviceProperty)(vrnew::IVRSystem *, vrnew::TrackedDeviceIndex_t, vrnew::ETrackedDeviceProperty, char *, uint32_t, vrnew::ETrackedPropertyError *);
 
 	pfnProcessVREvents origProcessVREvents;
+	pfnReadyWeaponProcessButton origReadyWeaponProcessButton;
 	pfnGetControllerState origGetControllerState;
 	pfnTriggerHapticPulse origTriggerHapticPulse;
 	pfnGetInt32TrackedDeviceProperty origGetInt32TrackedDeviceProperty;
 	pfnGetUint64TrackedDeviceProperty origGetUint64TrackedDeviceProperty;
 	pfnGetStringTrackedDeviceProperty origGetStringTrackedDeviceProperty;
 
+	RE::Setting *readyWeaponHoldSetting;
+
 	void Hook_ProcessVREvents(RE::BSOpenVR *self) {
 		UpdateControllerStates();
 		origProcessVREvents(self);
+	}
+
+	void Hook_ReadyWeaponProcessButton(RE::ReadyWeaponHandler *self, RE::ButtonEvent *event, RE::PlayerControlsData *data) {
+		origReadyWeaponProcessButton(self, event, data);
+
+		// the original function only actually performs the action if the button is held for 0.25s (or whatever is configured in fWaitMenuDelay setting)
+		// we want it to be instant, since the holding behaviour is something to be configured in SteamVR bindings instead, so if the button
+		// was just pressed, we immediately send a second event to the original with the "held down" time set to the required duration
+		if (!event->IsDown()) return;
+
+		// this flag is set on press and reset on action execution, so if it's false, the action was already performed
+		bool isWaitingForHold = self->GetVRRuntimeData()->unk10;
+		if (!isWaitingForHold) return;
+
+		// technically, the handler can also receive "Tween Or Ready Weapon", it should not happen with our control map, but let's check just in case
+		if (event->QUserEvent() != RE::UserEvents::GetSingleton()->readyWeapon) return;
+
+		auto &heldDownSecs = event->GetRuntimeData().heldDownSecs;
+		heldDownSecs = readyWeaponHoldSetting ? readyWeaponHoldSetting->GetFloat() : 0.25f;
+		origReadyWeaponProcessButton(self, event, data);
+		heldDownSecs = 0.0f;
 	}
 
 	// NOTE: there is GetControllerStateWithPose, but it doesn't seem to be used by the game, and the mods I checked (SKSE, HIGGS, PLANCK, SkyrimVRTools don't use it or simply forward it), so let's pretend it doesn't exist
@@ -106,6 +132,12 @@ bool InstallHooks() {
 	// hook state update method
 	REL::Relocation<uintptr_t> vtable_BSOpenVR{RE::VTABLE_BSOpenVR[0]};
 	origProcessVREvents = InstallHook(vtable_BSOpenVR, slotIdx_BSOpenVR_ProcessVREvents, &Hook_ProcessVREvents, "BSOpenVR::ProcessVREvents");
+
+	// hook ready weapon
+	REL::Relocation<uintptr_t> vtable_ReadyWeaponHandler{RE::VTABLE_ReadyWeaponHandler[0]};
+	origReadyWeaponProcessButton = InstallHook(vtable_ReadyWeaponHandler, slotIdx_ReadyWeaponHandler_ProcessButton, &Hook_ReadyWeaponProcessButton, "ReadyWeaponHandler::ProcessButton");
+	readyWeaponHoldSetting = RE::INISettingCollection::GetSingleton()->GetSetting("fWaitMenuDelay:VR");
+	if (!readyWeaponHoldSetting) logger::warn("fWaitMenuDelay:VR setting not found, assuming default delay of 0.25s");
 
 	// hook legacy API getters
 	REL::Relocation<uintptr_t> vtable_vrSystem{*((uintptr_t *) vrSystem)};
