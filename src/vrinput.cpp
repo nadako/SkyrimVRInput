@@ -59,23 +59,32 @@ namespace {
 		}
 	}
 
-	// something resets the input device buttons after our Init, and sometimes this happens mid-gameplay too
-	// i hack it around with a per-frame check for now, but would be nice to know under what conditions this happens
-	bool AreControllerDeviceButtonsBrokenAgain() {
-#if 0 // TODO: i think this has stopped happening after I hooked Prop_TrackingSystemName_String property to always be "oculus", I disabled it for now and will remove later
-		auto manager = RE::BSInputDeviceManager::GetSingleton();
-		auto controller = manager->GetVRControllerLeft();
-		auto &data = static_cast<RE::BSInputDevice *>(controller)->GetRuntimeData();
-		if (auto findResult = data.deviceButtons.find(0x21); findResult != data.deviceButtons.end()) {
-			if (findResult->second->name == "trigger") {
-				return true;
-			}
-		}
-#endif
-		return false;
+	// TODO: contribute this to commonlib-ng BSInputDeviceManager.h, I guess
+	void RefreshVRControllerDevices(RE::BSInputDeviceManager *manager) {
+		using func_t = void (*)(RE::BSInputDeviceManager *);
+		static REL::Relocation<func_t> func{ REL::Offset(0xC51D30) };
+		func(manager);
 	}
 
-	RE::INPUT_DEVICE GetControllerInputDevice(RE::BSTrackedControllerDevice* controller) {
+	void ForceOculusControllerDevices() {
+		auto openVr = RE::BSOpenVR::GetSingleton();
+		logger::info("Forcing HMD Device Type to Oculus ({}) (currently {})", (int) RE::BSVRInterface::HMDDeviceType::kOculus, (int) openVr->hmdDeviceType);
+		openVr->hmdDeviceType = RE::BSVRInterface::HMDDeviceType::kOculus;
+		RefreshVRControllerDevices(RE::BSInputDeviceManager::GetSingleton());
+	}
+
+	// TODO: this is here for debugging. we force hmd device type early so it shouldn't really change, but in case it does - i would like to know about it...
+	void CheckHmdDeviceTypeIsOculus() {
+		static auto lastHmdDeviceType = RE::BSVRInterface::HMDDeviceType::kOculus;
+
+		auto hmdDeviceType = RE::BSOpenVR::GetSingleton()->GetHMDDeviceType();
+		if (hmdDeviceType != lastHmdDeviceType) {
+			logger::warn("HMD Device Type changed from {} to {}, should be Oculus ({})", (int) lastHmdDeviceType, (int) hmdDeviceType, (int) RE::BSVRInterface::HMDDeviceType::kOculus);
+			lastHmdDeviceType = hmdDeviceType;
+		}
+	}
+
+	RE::INPUT_DEVICE GetControllerInputDevice(RE::BSTrackedControllerDevice *controller) {
 		return static_cast<RE::BSInputDevice *>(controller)->GetRuntimeData().device;
 	}
 
@@ -188,6 +197,7 @@ bool InitVRInput() {
 	StoreAction("/actions/gameplay/in/RightSkeleton", &handSkeletonActions[HandRight]);
 	StoreAction("/actions/gameplay/in/LeftSkeleton", &handSkeletonActions[HandLeft]);
 
+	ForceOculusControllerDevices();
 	SetupControllerDeviceButtons();
 
 	logger::info("VR Input setup complete.");
@@ -204,10 +214,7 @@ void UpdateControllerStates() {
 		contextStack = imguiContextStack;
 	}
 
-	if (AreControllerDeviceButtonsBrokenAgain()) {
-		logger::warn("Controller device buttons have been reset externally for some reason, setting them up again...");
-		SetupControllerDeviceButtons();
-	}
+	CheckHmdDeviceTypeIsOculus();
 
 	if (auto error = vrInput->UpdateActionState(frameActionSets, sizeof(frameActionSets[0]), actionSetCount); error != vrnew::VRInputError_None) {
 		logger::error("UpdateActionState returned error: {}", (int) error);

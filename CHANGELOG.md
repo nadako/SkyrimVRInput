@@ -1,3 +1,8 @@
+## 0.1.3 - 2026-11-04
+
+- Force oculus controllers internally, so they don't switch and break things if the game is launched while VR is not fully initialized.
+  (this should fix the button repeating issue among, I think, some other hiccups)
+
 ## 0.1.2 - 2026-11-02
 
 - Fixed the map marker menu getting in a broken state (funnily it depends on whether you moved your real mouse while in game).
