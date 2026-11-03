@@ -7,6 +7,7 @@
 namespace {
 	constexpr size_t slotIdx_BSOpenVR_ProcessVREvents = 11;
 	constexpr size_t slotIdx_ReadyWeaponHandler_ProcessButton = 6;
+	constexpr size_t slotIdx_MenuControls_ProcessEvent = 1;
 	constexpr size_t slotIdx_IVRSystem_GetInt32TrackedDeviceProperty = 24;
 	constexpr size_t slotIdx_IVRSystem_GetUint64TrackedDeviceProperty = 25;
 	constexpr size_t slotIdx_IVRSystem_GetStringTrackedDeviceProperty = 28;
@@ -15,6 +16,7 @@ namespace {
 
 	typedef void (*pfnProcessVREvents)(RE::BSOpenVR *);
 	typedef void (*pfnReadyWeaponProcessButton)(RE::ReadyWeaponHandler *, RE::ButtonEvent *, RE::PlayerControlsData *);
+	typedef RE::BSEventNotifyControl (*pfnMenuControlsProcessEvent)(RE::MenuControls *, RE::InputEvent *const *, RE::BSTEventSource<RE::InputEvent *> *);
 	typedef bool (*pfnGetControllerState)(vrnew::IVRSystem *, vrnew::TrackedDeviceIndex_t, vrnew::VRControllerState_t *, uint32_t);
 	typedef void (*pfnTriggerHapticPulse)(vrnew::IVRSystem *, vrnew::TrackedDeviceIndex_t, uint32_t, unsigned short);
 	typedef int32_t (*pfnGetInt32TrackedDeviceProperty)(vrnew::IVRSystem *, vrnew::TrackedDeviceIndex_t, vrnew::ETrackedDeviceProperty, vrnew::ETrackedPropertyError *);
@@ -23,6 +25,7 @@ namespace {
 
 	pfnProcessVREvents origProcessVREvents;
 	pfnReadyWeaponProcessButton origReadyWeaponProcessButton;
+	pfnMenuControlsProcessEvent origMenuControlsProcessEvent;
 	pfnGetControllerState origGetControllerState;
 	pfnTriggerHapticPulse origTriggerHapticPulse;
 	pfnGetInt32TrackedDeviceProperty origGetInt32TrackedDeviceProperty;
@@ -55,6 +58,24 @@ namespace {
 		heldDownSecs = readyWeaponHoldSetting ? readyWeaponHoldSetting->GetFloat() : 0.25f;
 		origReadyWeaponProcessButton(self, event, data);
 		heldDownSecs = 0.0f;
+	}
+
+	// swallow "orphan" button releases coming from actions that are still pressed but don't contribute to the controller state button mask anymore
+	RE::BSEventNotifyControl Hook_MenuControlsProcessEvent(RE::MenuControls *self, RE::InputEvent *const *events, RE::BSTEventSource<RE::InputEvent *> *source) {
+		for (auto event = events ? *events : nullptr; event; event = event->next) {
+			auto button = event->AsButtonEvent();
+			if (button && button->IsUp()) {
+				if (auto hand = GetHandForInputDevice(event->GetDevice()); hand != HandNone) {
+					if (IsOrphanControllerButtonRelease(hand, button->GetIDCode())) {
+						if (spdlog::should_log(spdlog::level::debug))
+							logger::debug("Ignoring UI button release user event of a button pressed in another input context: device={} code={:#x} userEvent='{}'",
+										  (int) event->GetDevice(), button->GetIDCode(), button->GetUserEvent().c_str());
+						button->SetUserEvent(RE::BSFixedString{});
+					}
+				}
+			}
+		}
+		return origMenuControlsProcessEvent(self, events, source);
 	}
 
 	// NOTE: there is GetControllerStateWithPose, but it doesn't seem to be used by the game, and the mods I checked (SKSE, HIGGS, PLANCK, SkyrimVRTools don't use it or simply forward it), so let's pretend it doesn't exist
@@ -138,6 +159,10 @@ bool InstallHooks() {
 	origReadyWeaponProcessButton = InstallHook(vtable_ReadyWeaponHandler, slotIdx_ReadyWeaponHandler_ProcessButton, &Hook_ReadyWeaponProcessButton, "ReadyWeaponHandler::ProcessButton");
 	readyWeaponHoldSetting = RE::INISettingCollection::GetSingleton()->GetSetting("fWaitMenuDelay:VR");
 	if (!readyWeaponHoldSetting) logger::warn("fWaitMenuDelay:VR setting not found, assuming default delay of 0.25s");
+
+	// hook UI event handler
+	REL::Relocation<uintptr_t> vtable_MenuControls{RE::VTABLE_MenuControls[0]};
+	origMenuControlsProcessEvent = InstallHook(vtable_MenuControls, slotIdx_MenuControls_ProcessEvent, &Hook_MenuControlsProcessEvent, "MenuControls::ProcessEvent");
 
 	// hook legacy API getters
 	REL::Relocation<uintptr_t> vtable_vrSystem{*((uintptr_t *) vrSystem)};

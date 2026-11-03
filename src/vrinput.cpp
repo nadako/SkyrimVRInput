@@ -25,6 +25,13 @@ namespace {
 	vrnew::VRControllerState_t controllerStates[HandCount];
 	std::mutex controllerStatesMutex; // reads can happen in other threads
 
+	// we track "orphan" button releases, when a button action is still physically pressed,
+	// but stops contributing to ulButtonPressed due to input context changes.
+	// we use this data in the MenuControls::ProcessEvent hook to zero the "up" events for
+	// such buttons so they don't have any effect (i.e. Map Mode "Click" release being handled as mouse hover)
+	uint64_t orphanControllerButtonReleases[HandCount]{};
+	bool lastEffectivePressedButtonActions[actionCount]{};
+
 	// The game only accumulates held time for the button codes registered in deviceButtons.
 	// Without this, every frame would count a held button as a separate press.
 	void SetupControllerDeviceButtons() {
@@ -52,19 +59,24 @@ namespace {
 		}
 	}
 
-	// TODO: something resets the input device buttons after our Init, and sometimes this happens mid-gameplay too
+	// something resets the input device buttons after our Init, and sometimes this happens mid-gameplay too
 	// i hack it around with a per-frame check for now, but would be nice to know under what conditions this happens
-	// TODO (new): i think this stopped happening after I hooked Prop_TrackingSystemName_String property to always be "oculus", disable, play and see if it ever happens now
 	bool AreControllerDeviceButtonsBrokenAgain() {
+#if 0 // TODO: i think this has stopped happening after I hooked Prop_TrackingSystemName_String property to always be "oculus", I disabled it for now and will remove later
 		auto manager = RE::BSInputDeviceManager::GetSingleton();
 		auto controller = manager->GetVRControllerLeft();
 		auto &data = static_cast<RE::BSInputDevice *>(controller)->GetRuntimeData();
-		if (auto findResult = data.deviceButtons.find(0); findResult != data.deviceButtons.end()) {
-			if (findResult->second->name == "system") {
+		if (auto findResult = data.deviceButtons.find(0x21); findResult != data.deviceButtons.end()) {
+			if (findResult->second->name == "trigger") {
 				return true;
 			}
 		}
+#endif
 		return false;
+	}
+
+	RE::INPUT_DEVICE GetControllerInputDevice(RE::BSTrackedControllerDevice* controller) {
+		return static_cast<RE::BSInputDevice *>(controller)->GetRuntimeData().device;
 	}
 
 	bool StoreAction(const char *name, vrnew::VRActionHandle_t *handle) {
@@ -107,6 +119,13 @@ Hand GetHandForTrackedDevice(vrnew::IVRSystem *system, vrnew::TrackedDeviceIndex
 	auto role = system->GetControllerRoleForTrackedDeviceIndex(trackedDeviceIndex);
 	if (role == vrnew::TrackedControllerRole_LeftHand) return HandLeft;
 	if (role == vrnew::TrackedControllerRole_RightHand) return HandRight;
+	return HandNone;
+}
+
+Hand GetHandForInputDevice(RE::INPUT_DEVICE device) {
+	auto manager = RE::BSInputDeviceManager::GetSingleton();
+	if (GetControllerInputDevice(manager->GetVRControllerLeft()) == device) return HandLeft;
+	if (GetControllerInputDevice(manager->GetVRControllerRight()) == device) return HandRight;
 	return HandNone;
 }
 
@@ -226,6 +245,7 @@ void UpdateControllerStates() {
 	vrnew::VRControllerState_t nextControllerStates[HandCount]{}; // note the {} to zero the memory
 	for (auto &state: nextControllerStates) state.unPacketNum = packetNum;
 
+	bool effectivePressedButtonActions[actionCount]{};
 	uint64_t handledStackedActions = 0;
 	GameInputContext prevContextId = InvalidInputContext; // invalid value for the first check
 	int topContextIndex = (int) contextStack.size() - 1;
@@ -240,7 +260,7 @@ void UpdateControllerStates() {
 		for (auto actionIndex: actionIndices) {
 			auto &actionDef = actionDefs[actionIndex];
 
-			if (actionDef.context.stackedId == -1 && contextIndex != topContextIndex) {
+			if (actionDef.context.topOnly && contextIndex != topContextIndex) {
 				continue; // action is only handled when its context is the top
 			}
 
@@ -266,6 +286,7 @@ void UpdateControllerStates() {
 						if (wasPressedInThisContext) {
 							nextControllerState.ulButtonPressed |= GetButtonCodeMask(actionControl.code);
 							handledStackedActions |= handledActionMask;
+							effectivePressedButtonActions[actionIndex] = true;
 						}
 					}
 
@@ -309,9 +330,26 @@ void UpdateControllerStates() {
 		}
 	}
 
+	uint64_t nextOrphanControllerButtonReleases[HandCount]{};
+	for (int actionIndex = 0; actionIndex < actionCount; actionIndex++) {
+		auto &actionDef = actionDefs[actionIndex];
+		if (actionDef.type == ActionTypeButton) {
+			bool buttonWasPressed = lastEffectivePressedButtonActions[actionIndex];
+			bool buttonIsPressed = effectivePressedButtonActions[actionIndex];
+			lastEffectivePressedButtonActions[actionIndex] = effectivePressedButtonActions[actionIndex];
+
+			// if the steamvr action is still pressed, but its controller state button is not - mark it as an "orphan" release
+			bool actionIsPressed = digitalActionData[actionIndex].bActive && digitalActionData[actionIndex].bState;
+			if (buttonWasPressed && !buttonIsPressed && actionIsPressed) {
+				nextOrphanControllerButtonReleases[actionDef.control.hand] |= GetButtonCodeMask(actionDef.control.code);
+			}
+		}
+	}
+
 	{
 		std::lock_guard lock(controllerStatesMutex);
 		std::memcpy(controllerStates, nextControllerStates, sizeof(controllerStates));
+		std::memcpy(orphanControllerButtonReleases, nextOrphanControllerButtonReleases, sizeof(orphanControllerButtonReleases));
 	}
 
 	if (IsVRIKFingerTrackingEnabled()) {
@@ -324,6 +362,12 @@ vrnew::VRControllerState_t GetControllerState(Hand hand) {
 	// this can be called from any thread, so there's a lock
 	std::lock_guard lock(controllerStatesMutex);
 	return controllerStates[hand];
+}
+
+bool IsOrphanControllerButtonRelease(Hand hand, uint32_t code) {
+	// this can be called from any thread, so there's a lock
+	std::lock_guard lock(controllerStatesMutex);
+	return (orphanControllerButtonReleases[hand] & GetButtonCodeMask(code)) != 0;
 }
 
 uint64_t GetHandSupportedButtons(Hand hand) {
