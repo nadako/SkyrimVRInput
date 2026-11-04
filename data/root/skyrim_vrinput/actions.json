@@ -1,7 +1,8 @@
 {
   "version": 1,
   "default_bindings": [
-    {"controller_type": "frame_controller", "binding_url": "bindings_frame_controller.json"}
+    {"controller_type": "frame_controller", "binding_url": "bindings_frame_controller.json"},
+    {"controller_type": "knuckles", "binding_url": "bindings_knuckles.json"}
   ],
   "action_sets": [
     {"name": "/actions/gameplay", "usage": "leftright"},

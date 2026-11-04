@@ -4,6 +4,7 @@ namespace {
 	REX::INI::Str<> sLogLevel{"Debug", "sLogLevel", "info"};
 
 	REX::INI::Bool<> sEnableVrikFingerTracking{"Fingers", "bEnableVrikFingerTracking", false};
+	REX::INI::Bool<> sTouchActionsAffectFingers{"Fingers", "bTouchActionsAffectFingers", false};
 
 	REX::INI::F32<> sHapticFrequency{"Haptics", "fFrequency", 200.0f};
 	REX::INI::F32<> sHapticMinAmplitude{"Haptics", "fMinAmplitude", 0.0f};
@@ -20,6 +21,7 @@ void LoadSettings() {
 	store->Load();
 
 	gSettings.enableVrikFingerTracking = sEnableVrikFingerTracking.GetValue();
+	gSettings.touchActionsAffectFingers = sTouchActionsAffectFingers.GetValue();
 	gSettings.hapticFrequency = sHapticFrequency.GetValue();
 	gSettings.hapticMinAmplitude = sHapticMinAmplitude.GetValue();
 	gSettings.hapticAddedDurationAmplitudeScale = sHapticAddedDurationAmplitudeScale.GetValue();

@@ -314,8 +314,7 @@ void UpdateControllerStates() {
 						handledStackedActions |= handledActionMask;
 					}
 					if (gSettings.logActions && data.bChanged) {
-						// disabled as it's way too spammy and seems to work well otherwise, so no need to debug for now
-						// logger::debug("{} {}", actionDef.name, data.bState ? "touched" : "lifted");
+						logger::trace("{} {}", actionDef.name, data.bState ? "touched" : "lifted");
 					}
 					break;
 				}

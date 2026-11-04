@@ -5,6 +5,7 @@ struct Settings {
 	bool logActions = false;
 
 	bool enableVrikFingerTracking = false;
+	bool touchActionsAffectFingers = false;
 
 	float hapticFrequency = 200.0f;
 	float hapticMinAmplitude = 0.0f;

@@ -1,3 +1,10 @@
+## 0.2.0 - 2026-11-04
+
+- Added some Index bindings.
+- Added bTouchActionsAffectFingers setting to control previously hard-coded finger curling behaviour, undesired with Index.
+  (now you can flip off Nazeem properly with your Index controllers. NOTE: this was always on and now off by default!)
+- Enabled touch action logging when sLogLevel=trace
+
 ## 0.1.3 - 2026-11-04
 
 - Force oculus controllers internally, so they don't switch and break things if the game is launched while VR is not fully initialized.

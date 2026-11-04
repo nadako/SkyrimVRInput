@@ -97,9 +97,11 @@ void UpdateVRIKFingers(vrnew::IVRInput *vrInput, Hand hand, vrnew::VRActionHandl
 
 	// TODO: this is a rather simple "fix" that will work for now, but ideally we should have configurable min/max remapping
 	// which would help with both "curved without pressing" and "fully open, but not detected as such". check there's something on the SteamVR level
-	if (controllerState->ulButtonTouched & GetButtonCodeMask(KnownButtons::Joystick)) positions[0] = 0.0f;
-	if (controllerState->ulButtonTouched & GetButtonCodeMask(KnownButtons::Trigger)) positions[1] = 0.0f;
-	if (controllerState->ulButtonTouched & GetButtonCodeMask(KnownButtons::Grip)) positions[2] = 0.0f;
+	if (gSettings.touchActionsAffectFingers) {
+		if (controllerState->ulButtonTouched & GetButtonCodeMask(KnownButtons::Joystick)) positions[0] = 0.0f;
+		if (controllerState->ulButtonTouched & GetButtonCodeMask(KnownButtons::Trigger)) positions[1] = 0.0f;
+		if (controllerState->ulButtonTouched & GetButtonCodeMask(KnownButtons::Grip)) positions[2] = 0.0f;
+	}
 
 	vrik->setFingerRange(isLeftHand, positions[0], positions[0], positions[1], positions[1], positions[2], positions[2], positions[3], positions[3], positions[4], positions[4]);
 }

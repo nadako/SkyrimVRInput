@@ -761,7 +761,7 @@
   },
   "category" : "steamvr_input",
   "controller_type" : "frame_controller",
-  "description" : "",
+  "description" : "Modern SteamVR Input",
   "interaction_profile" : "",
   "name" : "Default Steam Frame bindings",
   "options" : {},
