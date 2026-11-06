@@ -32,6 +32,8 @@ namespace {
 	uint64_t orphanControllerButtonReleases[HandCount]{};
 	bool lastEffectivePressedButtonActions[actionCount]{};
 
+	bool isDMEEnabled = false;
+
 	// The game only accumulates held time for the button codes registered in deviceButtons.
 	// Without this, every frame would count a held button as a separate press.
 	void SetupControllerDeviceButtons() {
@@ -96,6 +98,41 @@ namespace {
 		return true;
 	}
 
+	bool GetAnalogActionData(uint32_t actionIndex, vrnew::InputAnalogActionData_t *data) {
+		if (auto error = vrInput->GetAnalogActionData(actionHandles[actionIndex], data, sizeof(*data), vrnew::k_ulInvalidInputValueHandle); error != vrnew::VRInputError_None) {
+			logger::error("Error getting axis action data for action {}: {}", actionData::defs[actionIndex].name, (int) error);
+			return false;
+		}
+		return true;
+	}
+
+	bool GetOriginInfo(vrnew::VRInputValueHandle_t origin, vrnew::InputOriginInfo_t *info) {
+		if (auto error = vrInput->GetOriginTrackedDeviceInfo(origin, info, sizeof(*info)); error != vrnew::VRInputError_None) {
+			logger::error("IVRInput::GetOriginTrackedDeviceInfo({}) failed: {}", origin, (int) error);
+			return false;
+		}
+		return true;
+	}
+
+	bool IsMovementActionOrigin(vrnew::VRInputValueHandle_t origin) {
+		vrnew::InputOriginInfo_t originInfo;
+		if (!GetOriginInfo(origin, &originInfo)) return false;
+
+		for (auto actionIndex : actionData::movementActionIndices) {
+			vrnew::InputAnalogActionData_t data;
+			vrnew::InputOriginInfo_t movementOriginInfo;
+			if (GetAnalogActionData(actionIndex, &data) && data.bActive && GetOriginInfo(data.activeOrigin, &movementOriginInfo)) {
+				// i didn't find a better way to compare origins, because SteamVR reports different origin handles for the same physical button/stick...
+				auto &a = originInfo, &b = movementOriginInfo;
+				if (a.devicePath == b.devicePath && strcmp(a.rchRenderModelComponentName, b.rchRenderModelComponentName) == 0) {
+					return true;
+				}
+			}
+		}
+
+		return false;
+	}
+
 	// i guess this is the not most optimized, but we normally should have like up to 5 contexts, so it shouldn't matter
 	uint32_t CalculateContextStackGeneration(std::span<GameInputContext> contextStack) {
 		static uint32_t contextStackGeneration = 0;
@@ -144,9 +181,10 @@ bool InitVRInput() {
 
 	// SteamVR opens the manifest file and the referenced bindings, so it needs a physical path, not MO2 virtualized one
 	// that's why we must deploy them into the game folder (with Root Builder or manually)
-	char actionManifestPath[MAX_PATH];
+	constexpr char actionManifestRelativePath[] = "\\skyrim_vrinput\\actions.json";
+	char actionManifestPath[MAX_PATH + sizeof(actionManifestRelativePath)];
 	GetCurrentDirectory(MAX_PATH, actionManifestPath);
-	strcat_s(actionManifestPath, "\\skyrim_vrinput\\actions.json");
+	strcat_s(actionManifestPath, actionManifestRelativePath);
 
 	if (!std::filesystem::exists(actionManifestPath)) {
 		logger::error("Action manifest path does not exist. Check installation. ({})", actionManifestPath);
@@ -161,7 +199,7 @@ bool InitVRInput() {
 	logger::info("Action manifest set: {}", actionManifestPath);
 
 	auto actionSetNames = actionData::sets;
-	for (int i = 0; i < actionSetCount; ++i) {
+	for (uint32_t i = 0; i < actionSetCount; ++i) {
 		vrnew::VRActionSetHandle_t actionSetHandle;
 		if (auto error = vrInput->GetActionSetHandle(actionSetNames[i], &actionSetHandle); error != vrnew::VRInputError_None) {
 			logger::error("Could not get action set handle {}: error {}", actionSetNames[i], (int) error);
@@ -169,6 +207,10 @@ bool InitVRInput() {
 		}
 		frameActionSets[i] = {.ulActionSet = actionSetHandle};
 	}
+
+	constexpr auto DMEPluginModuleName = "DialogueMovementEnabler.dll";
+	isDMEEnabled = GetModuleHandleA(DMEPluginModuleName) != nullptr;
+	if (isDMEEnabled) logger::info("{} detected, enabling movement actions in dialogue", DMEPluginModuleName);
 
 	for (uint32_t actionIndex = 0; actionIndex < actionCount; ++actionIndex) {
 		auto &actionDef = actionDefs[actionIndex];
@@ -184,6 +226,11 @@ bool InitVRInput() {
 				auto &additionalContextActions = actionsPerContext[additionalActionContext.context];
 				additionalContextActions.push_back(actionIndex);
 			}
+		}
+
+		if (isDMEEnabled && actionDef.flags & ActionFlagMovement) {
+			auto &additionalContextActions = actionsPerContext[kContext_DialogueMenu];
+			additionalContextActions.push_back(actionIndex);
 		}
 
 		lastActionPressedContextStackGeneration[actionIndex] = NotPressedGeneration;
@@ -228,7 +275,7 @@ void UpdateControllerStates() {
 	// be considered pressed when the input context changes for that menu)
 	// also, it seems like OpenVR reports bChanged=true if the action was pressed/released, but we didn't call GetDigitalActionData for it...
 	static vrnew::InputDigitalActionData_t digitalActionData[actionCount]; // most of actions are digital, so let's have a simple array of digital datas, leaving unused slots for analog actions
-	for (int actionIndex = 0; actionIndex < actionCount; actionIndex++) {
+	for (uint32_t actionIndex = 0; actionIndex < actionCount; actionIndex++) {
 		auto &actionDef = actionDefs[actionIndex];
 		if (!(actionDef.type == ActionTypeButton || actionDef.type == ActionTypeTouch)) continue;
 
@@ -280,7 +327,6 @@ void UpdateControllerStates() {
 
 			auto &actionControl = actionDef.control;
 			auto &nextControllerState = nextControllerStates[actionControl.hand];
-			auto actionHandle = actionHandles[actionIndex];
 
 			switch (actionDef.type) {
 				case ActionTypeButton: {
@@ -289,6 +335,16 @@ void UpdateControllerStates() {
 						continue;
 
 					if (data.bState) {
+						// when Dialogue Movement Enabler VR is enabled we allow move/turn actions in the dialogue menu,
+						// so if the menu nav button actions are bound to the same physical component as movement (e.g. sticks),
+						// we need to ignore them to prevent active dialogue item switching when moving/turning
+						if (isDMEEnabled) {
+							bool isMenuNavAction = actionDef.flags & ActionFlagMenuNav;
+							if (isMenuNavAction && contextId == kContext_DialogueMenu && IsMovementActionOrigin(data.activeOrigin)) {
+								continue;
+							}
+						}
+
 						bool wasPressedInThisContext = lastActionPressedContextStackGeneration[actionIndex] == contextStackGeneration;
 						if (wasPressedInThisContext) {
 							nextControllerState.ulButtonPressed |= GetButtonCodeMask(actionControl.code);
@@ -321,10 +377,7 @@ void UpdateControllerStates() {
 				case ActionTypeAxis1:
 				case ActionTypeAxis2: {
 					vrnew::InputAnalogActionData_t data;
-					if (auto error = vrInput->GetAnalogActionData(actionHandle, &data, sizeof(data), vrnew::k_ulInvalidInputValueHandle); error != vrnew::VRInputError_None) {
-						logger::error("Error getting axis action data for action {}: {}", actionDef.name, (int) error);
-						continue;
-					}
+					if (!GetAnalogActionData(actionIndex, &data)) continue;
 
 					if (data.bActive) {
 						nextControllerState.rAxis[actionControl.axis] = {data.x, actionDef.type == ActionTypeAxis2 ? data.y : 0.0f};
@@ -337,7 +390,7 @@ void UpdateControllerStates() {
 	}
 
 	uint64_t nextOrphanControllerButtonReleases[HandCount]{};
-	for (int actionIndex = 0; actionIndex < actionCount; actionIndex++) {
+	for (uint32_t actionIndex = 0; actionIndex < actionCount; actionIndex++) {
 		auto &actionDef = actionDefs[actionIndex];
 		if (actionDef.type == ActionTypeButton) {
 			bool buttonWasPressed = lastEffectivePressedButtonActions[actionIndex];

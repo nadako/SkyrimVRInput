@@ -1,3 +1,7 @@
+## 0.3.0 - 2026-11-06
+
+- Added support for Dialogue Movement Enabler VR
+
 ## 0.2.0 - 2026-11-04
 
 - Added some Index bindings.

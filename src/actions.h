@@ -101,8 +101,13 @@ struct ActionDef {
 	const char *name;
 	ActionContext context;
 	ActionType type;
-
 	ActionLegacyControl control;
+	uint8_t flags; // see ActionFlags, used for other mod support
+};
+
+enum ActionFlags {
+	ActionFlagMovement = 1,
+	ActionFlagMenuNav = 2,
 };
 
 // known legacy button codes for sensible re-use
@@ -141,9 +146,9 @@ namespace actionData {
 		// @formatter:off preserve table layout
 		// NOTE: PLANCK (activeragdoll) relies on the first joystick input to determine movement for power attacks!
 		// TODO: it also checks for g_leftHandedMode, so we should switch them ideally, but handedness is a bigger topic...
-		{"/actions/gameplay/in/Move",          {kContext_Gameplay, 0, true}, ActionTypeAxis2, {HandLeft,  AxisJoystick}},
-		{"/actions/gameplay/in/TurnJumpSneak", {kContext_Gameplay, 0, true}, ActionTypeAxis2, {HandRight, AxisJoystick}},
-		{"/actions/gameplay/in/Turn",          {kContext_Gameplay, 0, true}, ActionTypeAxis1, {HandRight, AxisJoystick}}, // allow binding turning-only, this is intentionally Axis1 so we zero out the y value, so the game doesn't do jump/sneak
+		{"/actions/gameplay/in/Move",          {kContext_Gameplay, 0, true}, ActionTypeAxis2, {HandLeft,  AxisJoystick}, ActionFlagMovement},
+		{"/actions/gameplay/in/TurnJumpSneak", {kContext_Gameplay, 0, true}, ActionTypeAxis2, {HandRight, AxisJoystick}, ActionFlagMovement},
+		{"/actions/gameplay/in/Turn",          {kContext_Gameplay, 0, true}, ActionTypeAxis1, {HandRight, AxisJoystick}, ActionFlagMovement}, // allow binding turning-only, this is intentionally Axis1 so we zero out the y value, so the game doesn't do jump/sneak
 
 		{"/actions/gameplay/in/LeftTrigger",   {kContext_Gameplay, 0, true}, ActionTypeButton, {HandLeft,  KnownButtons::Trigger}},
 		{"/actions/gameplay/in/RightTrigger",  {kContext_Gameplay, 0, true}, ActionTypeButton, {HandRight, KnownButtons::Trigger}},
@@ -192,10 +197,10 @@ namespace actionData {
 		{"/actions/menu/in/Cancel",            {kContext_MenuMode, 0}, ActionTypeButton, {HandRight, KnownButtons::Grip}},
 		{"/actions/menu/in/ActionA",           {kContext_MenuMode, 0}, ActionTypeButton, {HandLeft, KnownButtons::AX}}, // drop items / take all / craft
 		{"/actions/menu/in/ActionB",           {kContext_MenuMode, 0}, ActionTypeButton, {HandLeft, KnownButtons::BY}}, // favorite / search (in crafting menus)
-		{"/actions/menu/in/Up",                {kContext_MenuMode, StackedActions::MenuNav}, ActionTypeButton, {HandRight, 0x03}},
-		{"/actions/menu/in/Down",              {kContext_MenuMode, StackedActions::MenuNav}, ActionTypeButton, {HandRight, 0x04}},
-		{"/actions/menu/in/Left",              {kContext_MenuMode, StackedActions::MenuNav}, ActionTypeButton, {HandRight, 0x05}},
-		{"/actions/menu/in/Right",             {kContext_MenuMode, StackedActions::MenuNav}, ActionTypeButton, {HandRight, 0x06}},
+		{"/actions/menu/in/Up",                {kContext_MenuMode, StackedActions::MenuNav}, ActionTypeButton, {HandRight, 0x03}, ActionFlagMenuNav},
+		{"/actions/menu/in/Down",              {kContext_MenuMode, StackedActions::MenuNav}, ActionTypeButton, {HandRight, 0x04}, ActionFlagMenuNav},
+		{"/actions/menu/in/Left",              {kContext_MenuMode, StackedActions::MenuNav}, ActionTypeButton, {HandRight, 0x05}, ActionFlagMenuNav},
+		{"/actions/menu/in/Right",             {kContext_MenuMode, StackedActions::MenuNav}, ActionTypeButton, {HandRight, 0x06}, ActionFlagMenuNav},
 
 		{"/actions/menu/in/TabLeft",           {kContext_Journal, 0}, ActionTypeButton, {HandLeft,  0x08}},
 		{"/actions/menu/in/TabRight",          {kContext_Journal, 0}, ActionTypeButton, {HandRight, 0x08}},
@@ -277,6 +282,16 @@ namespace actionData {
 		{"/actions/menu/in/TabRight", kContext_RaceSexMenu},
 		// @formatter:on
 	};
+
+	constexpr auto movementActionIndices = [] {
+		constexpr auto count = std::ranges::count_if(defs, [](auto &def) { return def.flags & ActionFlagMovement; });
+		std::array<uint32_t, count> indices{};
+		uint32_t i = 0;
+		for (uint32_t actionIndex = 0; actionIndex < std::size(defs); actionIndex++) {
+			if (defs[actionIndex].flags & ActionFlagMovement) indices[i++] = actionIndex;
+		}
+		return indices;
+	}();
 }
 
 constexpr uint32_t actionSetCount = std::size(actionData::sets);

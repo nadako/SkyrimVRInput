@@ -104,7 +104,9 @@ button_codes = {
         "XButton": (0x02, None), # even though it's stacked on Menu Mode, the XButton isn't really meant to be "Action A", but rather the "confirm and exit", bound to grip, so let's rebind it to the "Cancel" action
                                  # TODO: check other overrides like this in the original controlmapvr.txt and see if there's something like this that makes sense
     },
-    "Dialogue Menu": menu_mode_basic_button_codes,
+    "Dialogue Menu": menu_mode_basic_button_codes | {
+        "Left Stick": (0x0c, 0x0b), # These are what Look and Move actions will produce when DialogueMovementEnabler is present (that mod needs them).
+    },
 }
 
 # context headers are comments that are followed by tabs and VR column hints
