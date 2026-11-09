@@ -1,4 +1,4 @@
-local version = "0.3.0"
+local version = "0.3.1"
 
 set_project("skyrim_vrinput")
 set_version(version)

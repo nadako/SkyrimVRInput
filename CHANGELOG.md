@@ -1,3 +1,8 @@
+## 0.3.1 - 2026-11-09
+
+- Added A/X and B/Y bindings for ImGui.
+- Changed default Index binding for Exit Map to Grip Force (like for the menus).
+
 ## 0.3.0 - 2026-11-06
 
 - Added support for Dialogue Movement Enabler VR

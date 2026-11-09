@@ -342,6 +342,46 @@
 		  "mode" : "button",
 		  "parameters" : {},
 		  "path" : "/user/hand/left/input/trigger"
+		},
+		{
+		  "inputs" : {
+			"click" : {
+			  "output" : "/actions/imgui/in/rightax"
+			}
+		  },
+		  "mode" : "button",
+		  "parameters" : {},
+		  "path" : "/user/hand/right/input/a"
+		},
+		{
+		  "inputs" : {
+			"click" : {
+			  "output" : "/actions/imgui/in/rightby"
+			}
+		  },
+		  "mode" : "button",
+		  "parameters" : {},
+		  "path" : "/user/hand/right/input/b"
+		},
+		{
+		  "inputs" : {
+			"click" : {
+			  "output" : "/actions/imgui/in/leftax"
+			}
+		  },
+		  "mode" : "button",
+		  "parameters" : {},
+		  "path" : "/user/hand/left/input/dpad_down"
+		},
+		{
+		  "inputs" : {
+			"click" : {
+			  "output" : "/actions/imgui/in/leftby"
+			}
+		  },
+		  "mode" : "button",
+		  "parameters" : {},
+		  "path" : "/user/hand/left/input/dpad_left"
 		}
 	  ]
 	},

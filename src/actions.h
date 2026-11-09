@@ -240,6 +240,10 @@ namespace actionData {
 		{"/actions/imgui/in/RightStick",       {kContext_ImGuiHelper, 0},  ActionTypeAxis2,  {HandRight, AxisJoystick}},
 		{"/actions/imgui/in/LeftStickButton",  {kContext_ImGuiHelper, 0},  ActionTypeButton, {HandLeft,  KnownButtons::Joystick}},
 		{"/actions/imgui/in/RightStickButton", {kContext_ImGuiHelper, 0},  ActionTypeButton, {HandRight, KnownButtons::Joystick}},
+		{"/actions/imgui/in/LeftAX",           {kContext_ImGuiHelper, 0},  ActionTypeButton, {HandLeft,  KnownButtons::AX}},
+		{"/actions/imgui/in/LeftBY",           {kContext_ImGuiHelper, 0},  ActionTypeButton, {HandLeft,  KnownButtons::BY}},
+		{"/actions/imgui/in/RightAX",          {kContext_ImGuiHelper, 0},  ActionTypeButton, {HandRight, KnownButtons::AX}},
+		{"/actions/imgui/in/RightBY",          {kContext_ImGuiHelper, 0},  ActionTypeButton, {HandRight, KnownButtons::BY}},
 		// @formatter:on
 	};
 

@@ -91,6 +91,10 @@
 	{"name": "/actions/imgui/in/RightStick", "type": "vector2"},
 	{"name": "/actions/imgui/in/LeftStickButton", "type": "boolean"},
 	{"name": "/actions/imgui/in/RightStickButton", "type": "boolean"},
+	{"name": "/actions/imgui/in/LeftAX", "type": "boolean"},
+	{"name": "/actions/imgui/in/LeftBY", "type": "boolean"},
+	{"name": "/actions/imgui/in/RightAX", "type": "boolean"},
+	{"name": "/actions/imgui/in/RightBY", "type": "boolean"},
 
     {"name": "/actions/gameplay/in/RightSkeleton", "type": "skeleton", "skeleton": "/skeleton/hand/right"},
     {"name": "/actions/gameplay/in/LeftSkeleton", "type": "skeleton", "skeleton": "/skeleton/hand/left"},
@@ -189,7 +193,11 @@
 	  "/actions/imgui/in/LeftStick":  "Left Stick",
 	  "/actions/imgui/in/RightStick": "Right Stick",
 	  "/actions/imgui/in/LeftStickButton":  "Left Stick Button",
-	  "/actions/imgui/in/RightStickButton": "Right Stick Button"
+	  "/actions/imgui/in/RightStickButton": "Right Stick Button",
+	  "/actions/imgui/in/LeftAX": "Left A/X",
+	  "/actions/imgui/in/LeftBY": "Left B/Y",
+	  "/actions/imgui/in/RightAX": "Right A/X",
+	  "/actions/imgui/in/RightBY": "Right B/Y"
     }
   ]
 }
