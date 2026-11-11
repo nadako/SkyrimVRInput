@@ -114,14 +114,34 @@ namespace {
 		return true;
 	}
 
-	bool IsMovementActionOrigin(vrnew::VRInputValueHandle_t origin) {
+	bool IsMovementActionOrigin(vrnew::VRInputValueHandle_t origin, const vrnew::InputDigitalActionData_t *digitalActionData) {
 		vrnew::InputOriginInfo_t originInfo;
 		if (!GetOriginInfo(origin, &originInfo)) return false;
 
 		for (auto actionIndex : actionData::movementActionIndices) {
-			vrnew::InputAnalogActionData_t data;
+			bool isActive = false;
+			vrnew::VRInputValueHandle_t movementOrigin = vrnew::k_ulInvalidInputValueHandle;
+
+			switch (actionData::defs[actionIndex].type) {
+				case ActionTypeButton:
+				case ActionTypeTouch: {
+					isActive = digitalActionData[actionIndex].bActive;
+					movementOrigin = digitalActionData[actionIndex].activeOrigin;
+					break;
+				}
+				case ActionTypeAxis1:
+				case ActionTypeAxis2: {
+					vrnew::InputAnalogActionData_t data;
+					if (GetAnalogActionData(actionIndex, &data)) {
+						isActive = data.bActive;
+						movementOrigin = data.activeOrigin;
+					}
+					break;
+				}
+			}
+
 			vrnew::InputOriginInfo_t movementOriginInfo;
-			if (GetAnalogActionData(actionIndex, &data) && data.bActive && GetOriginInfo(data.activeOrigin, &movementOriginInfo)) {
+			if (isActive && GetOriginInfo(movementOrigin, &movementOriginInfo)) {
 				// i didn't find a better way to compare origins, because SteamVR reports different origin handles for the same physical button/stick...
 				auto &a = originInfo, &b = movementOriginInfo;
 				if (a.devicePath == b.devicePath && strcmp(a.rchRenderModelComponentName, b.rchRenderModelComponentName) == 0) {
@@ -340,7 +360,7 @@ void UpdateControllerStates() {
 						// we need to ignore them to prevent active dialogue item switching when moving/turning
 						if (isDMEEnabled) {
 							bool isMenuNavAction = actionDef.flags & ActionFlagMenuNav;
-							if (isMenuNavAction && contextId == kContext_DialogueMenu && IsMovementActionOrigin(data.activeOrigin)) {
+							if (isMenuNavAction && contextId == kContext_DialogueMenu && IsMovementActionOrigin(data.activeOrigin, digitalActionData)) {
 								continue;
 							}
 						}

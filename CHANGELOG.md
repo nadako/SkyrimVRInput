@@ -1,3 +1,7 @@
+## 0.4.0 - 2026-11-11
+
+- Added single-direction movement actions, so you could bind e.g. "toggle move forward". Also works with Dialogue Movement Enabler VR.
+
 ## 0.3.1 - 2026-11-09
 
 - Added A/X and B/Y bindings for ImGui.

@@ -1,4 +1,4 @@
-local version = "0.3.1"
+local version = "0.4.0"
 
 set_project("skyrim_vrinput")
 set_version(version)
@@ -39,7 +39,7 @@ target("skyrim_vrinput")
         local dist_dir = path.absolute(vformat("$(builddir)/dist"))
         local dist_mod_dir = path.join(dist_dir, "SkyrimVRInput")
         local dist_archive = path.join(dist_dir, "SkyrimVRInput-" .. target:version() .. ".zip")
-        os.tryrm(dist_dir)
+        os.rm(dist_dir)
 
         local target_dirs = {
             --"C:/SteamLibrary/steamapps/common/SkyrimVR/Data",

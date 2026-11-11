@@ -26,8 +26,16 @@ tab_left_right_button_codes = {
     # our Tab Left/Right actions will invoke either left or right button, so this just works
     "Tab By Handedness": (0x08, 0x08),
 }
+single_direction_movement_button_codes = {
+    # those are Main Gameplay events, but we also add them to Dialogue Menu, so Dialogue Movement Enabler can work with them as well
+    # (dialogue clears the 0x800 control flag, so without the explicit Dialogue Menu rows, these codes fall through to the Main Gameplay rows (0x801), which then get skipped)
+    "Forward": (None, 0x0d),
+    "Back": (None, 0x0e),
+    "Strafe Left": (None, 0x0f),
+    "Strafe Right": (None, 0x10),
+}
 button_codes = {
-    "Main Gameplay": {
+    "Main Gameplay": single_direction_movement_button_codes | {
         # as far as I understand, the engine would emit events with these codes for axis0 (joystick) of respective hands and it's hard-coded,
         # but we still need to map it to bind the action to the axis
         "Move": (None, 0x0b),
@@ -104,7 +112,7 @@ button_codes = {
         "XButton": (0x02, None), # even though it's stacked on Menu Mode, the XButton isn't really meant to be "Action A", but rather the "confirm and exit", bound to grip, so let's rebind it to the "Cancel" action
                                  # TODO: check other overrides like this in the original controlmapvr.txt and see if there's something like this that makes sense
     },
-    "Dialogue Menu": menu_mode_basic_button_codes | {
+    "Dialogue Menu": menu_mode_basic_button_codes | single_direction_movement_button_codes | {
         "Left Stick": (0x0c, 0x0b), # These are what Look and Move actions will produce when DialogueMovementEnabler is present (that mod needs them).
     },
 }

@@ -150,6 +150,11 @@ namespace actionData {
 		{"/actions/gameplay/in/TurnJumpSneak", {kContext_Gameplay, 0, true}, ActionTypeAxis2, {HandRight, AxisJoystick}, ActionFlagMovement},
 		{"/actions/gameplay/in/Turn",          {kContext_Gameplay, 0, true}, ActionTypeAxis1, {HandRight, AxisJoystick}, ActionFlagMovement}, // allow binding turning-only, this is intentionally Axis1 so we zero out the y value, so the game doesn't do jump/sneak
 
+		{"/actions/gameplay/in/MoveForward",   {kContext_Gameplay, 0, true}, ActionTypeButton, {HandLeft, 0x0d}, ActionFlagMovement},
+		{"/actions/gameplay/in/MoveBack",      {kContext_Gameplay, 0, true}, ActionTypeButton, {HandLeft, 0x0e}, ActionFlagMovement},
+		{"/actions/gameplay/in/MoveLeft",      {kContext_Gameplay, 0, true}, ActionTypeButton, {HandLeft, 0x0f}, ActionFlagMovement},
+		{"/actions/gameplay/in/MoveRight",     {kContext_Gameplay, 0, true}, ActionTypeButton, {HandLeft, 0x10}, ActionFlagMovement},
+
 		{"/actions/gameplay/in/LeftTrigger",   {kContext_Gameplay, 0, true}, ActionTypeButton, {HandLeft,  KnownButtons::Trigger}},
 		{"/actions/gameplay/in/RightTrigger",  {kContext_Gameplay, 0, true}, ActionTypeButton, {HandRight, KnownButtons::Trigger}},
 		{"/actions/gameplay/in/LeftGrip",      {kContext_Gameplay, 0, true}, ActionTypeButton, {HandLeft,  KnownButtons::Grip}},
