@@ -1,4 +1,4 @@
-local version = "0.4.0"
+local version = "0.5.0"
 
 set_project("skyrim_vrinput")
 set_version(version)
@@ -32,6 +32,9 @@ target("skyrim_vrinput")
         import("utils.archive")
 
         os.vrunv("python", {path.join(os.projectdir(), "tools/generate_controlmapvr.py")})
+        for _, controller in ipairs({"frame_controller", "knuckles"}) do
+            os.vrunv("python", {path.join(os.projectdir(), "tools/mirror_bindings.py"), path.join(os.projectdir(), "data/root/skyrim_vrinput/bindings_" .. controller .. ".json")})
+        end
 
         local source_data_dir = path.join(os.projectdir(), "data")
         local source_data_files = os.files(path.join(source_data_dir, "**"))

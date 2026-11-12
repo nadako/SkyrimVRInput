@@ -35,7 +35,7 @@
 			  "output" : "/actions/gameplay/in/turnjumpsneak"
 			},
 			"touch" : {
-			  "output" : "/actions/gameplay/in/rightthumbtouch"
+			  "output" : "/actions/gameplay/in/primarythumbtouch"
 			}
 		  },
 		  "mode" : "joystick",
@@ -45,10 +45,10 @@
 		{
 		  "inputs" : {
 			"click" : {
-			  "output" : "/actions/gameplay/in/righttrigger"
+			  "output" : "/actions/gameplay/in/primarytrigger"
 			},
 			"touch" : {
-			  "output" : "/actions/gameplay/in/righttriggertouch"
+			  "output" : "/actions/gameplay/in/primarytriggertouch"
 			}
 		  },
 		  "mode" : "button",
@@ -58,10 +58,10 @@
 		{
 		  "inputs" : {
 			"click" : {
-			  "output" : "/actions/gameplay/in/lefttrigger"
+			  "output" : "/actions/gameplay/in/secondarytrigger"
 			},
 			"touch" : {
-			  "output" : "/actions/gameplay/in/lefttriggertouch"
+			  "output" : "/actions/gameplay/in/secondarytriggertouch"
 			}
 		  },
 		  "mode" : "button",
@@ -71,7 +71,7 @@
 		{
 		  "inputs" : {
 			"touch" : {
-			  "output" : "/actions/gameplay/in/rightgriptouch"
+			  "output" : "/actions/gameplay/in/primarygriptouch"
 			}
 		  },
 		  "mode" : "button",
@@ -81,7 +81,7 @@
 		{
 		  "inputs" : {
 			"touch" : {
-			  "output" : "/actions/gameplay/in/leftgriptouch"
+			  "output" : "/actions/gameplay/in/secondarygriptouch"
 			}
 		  },
 		  "mode" : "button",
@@ -94,7 +94,7 @@
 			  "output" : "/actions/gameplay/in/activate"
 			},
 			"touch" : {
-			  "output" : "/actions/gameplay/in/rightthumbtouch"
+			  "output" : "/actions/gameplay/in/primarythumbtouch"
 			}
 		  },
 		  "mode" : "button",
@@ -110,7 +110,7 @@
 			  "output" : "/actions/gameplay/in/favorites"
 			},
 			"touch" : {
-			  "output" : "/actions/gameplay/in/rightthumbtouch"
+			  "output" : "/actions/gameplay/in/primarythumbtouch"
 			}
 		  },
 		  "mode" : "button",
@@ -122,10 +122,10 @@
 		{
 		  "inputs" : {
 			"click" : {
-			  "output" : "/actions/gameplay/in/rightaxis3button"
+			  "output" : "/actions/gameplay/in/primaryaxis3button"
 			},
 			"touch" : {
-			  "output" : "/actions/gameplay/in/rightthumbtouch"
+			  "output" : "/actions/gameplay/in/primarythumbtouch"
 			}
 		  },
 		  "mode" : "button",
@@ -135,10 +135,10 @@
 		{
 		  "inputs" : {
 			"click" : {
-			  "output" : "/actions/gameplay/in/leftaxis3button"
+			  "output" : "/actions/gameplay/in/secondaryaxis3button"
 			},
 			"touch" : {
-			  "output" : "/actions/gameplay/in/leftthumbtouch"
+			  "output" : "/actions/gameplay/in/secondarythumbtouch"
 			}
 		  },
 		  "mode" : "button",
@@ -154,7 +154,7 @@
 			  "output" : "/actions/gameplay/in/quicksave"
 			},
 			"touch" : {
-			  "output" : "/actions/gameplay/in/leftthumbtouch"
+			  "output" : "/actions/gameplay/in/secondarythumbtouch"
 			}
 		  },
 		  "mode" : "button",
@@ -170,7 +170,7 @@
 			  "output" : "/actions/gameplay/in/wait"
 			},
 			"touch" : {
-			  "output" : "/actions/gameplay/in/leftthumbtouch"
+			  "output" : "/actions/gameplay/in/secondarythumbtouch"
 			}
 		  },
 		  "mode" : "button",
@@ -180,7 +180,7 @@
 		{
 		  "inputs" : {
 			"grab" : {
-			  "output" : "/actions/gameplay/in/rightgrip"
+			  "output" : "/actions/gameplay/in/primarygrip"
 			}
 		  },
 		  "mode" : "grab",
@@ -190,7 +190,7 @@
 		{
 		  "inputs" : {
 			"grab" : {
-			  "output" : "/actions/gameplay/in/leftgrip"
+			  "output" : "/actions/gameplay/in/secondarygrip"
 			}
 		  },
 		  "mode" : "grab",
@@ -206,7 +206,7 @@
 			  "output" : "/actions/gameplay/in/move"
 			},
 			"touch" : {
-			  "output" : "/actions/gameplay/in/leftthumbtouch"
+			  "output" : "/actions/gameplay/in/secondarythumbtouch"
 			}
 		  },
 		  "mode" : "joystick",
@@ -223,7 +223,7 @@
 		{
 		  "inputs" : {
 			"click" : {
-			  "output" : "/actions/imgui/in/rightgrip"
+			  "output" : "/actions/imgui/in/primarygrip"
 			}
 		  },
 		  "mode" : "button",
@@ -237,10 +237,10 @@
 		{
 		  "inputs" : {
 			"click" : {
-			  "output" : "/actions/imgui/in/rightstickbutton"
+			  "output" : "/actions/imgui/in/primarystickbutton"
 			},
 			"position" : {
-			  "output" : "/actions/imgui/in/rightstick"
+			  "output" : "/actions/imgui/in/primarystick"
 			}
 		  },
 		  "mode" : "joystick",
@@ -250,7 +250,7 @@
 		{
 		  "inputs" : {
 			"click" : {
-			  "output" : "/actions/imgui/in/righttrigger"
+			  "output" : "/actions/imgui/in/primarytrigger"
 			}
 		  },
 		  "mode" : "button",
@@ -260,10 +260,10 @@
 		{
 		  "inputs" : {
 			"click" : {
-			  "output" : "/actions/imgui/in/leftstickbutton"
+			  "output" : "/actions/imgui/in/secondarystickbutton"
 			},
 			"position" : {
-			  "output" : "/actions/imgui/in/leftstick"
+			  "output" : "/actions/imgui/in/secondarystick"
 			}
 		  },
 		  "mode" : "joystick",
@@ -273,7 +273,7 @@
 		{
 		  "inputs" : {
 			"click" : {
-			  "output" : "/actions/imgui/in/lefttrigger"
+			  "output" : "/actions/imgui/in/secondarytrigger"
 			}
 		  },
 		  "mode" : "button",
@@ -283,7 +283,7 @@
 		{
 		  "inputs" : {
 			"click" : {
-			  "output" : "/actions/imgui/in/leftgrip"
+			  "output" : "/actions/imgui/in/secondarygrip"
 			}
 		  },
 		  "mode" : "button",
@@ -297,7 +297,7 @@
 		{
 		  "inputs" : {
 			"click" : {
-			  "output" : "/actions/imgui/in/rightby"
+			  "output" : "/actions/imgui/in/primaryby"
 			}
 		  },
 		  "mode" : "button",
@@ -307,7 +307,7 @@
 		{
 		  "inputs" : {
 			"click" : {
-			  "output" : "/actions/imgui/in/rightax"
+			  "output" : "/actions/imgui/in/primaryax"
 			}
 		  },
 		  "mode" : "button",
@@ -317,7 +317,7 @@
 		{
 		  "inputs" : {
 			"click" : {
-			  "output" : "/actions/imgui/in/leftax"
+			  "output" : "/actions/imgui/in/secondaryax"
 			}
 		  },
 		  "mode" : "button",
@@ -327,7 +327,7 @@
 		{
 		  "inputs" : {
 			"click" : {
-			  "output" : "/actions/imgui/in/leftby"
+			  "output" : "/actions/imgui/in/secondaryby"
 			}
 		  },
 		  "mode" : "button",
@@ -556,7 +556,7 @@
 		{
 		  "inputs" : {
 			"click" : {
-			  "output" : "/actions/menu/in/equipright"
+			  "output" : "/actions/menu/in/equipprimary"
 			}
 		  },
 		  "mode" : "button",
@@ -566,7 +566,7 @@
 		{
 		  "inputs" : {
 			"click" : {
-			  "output" : "/actions/menu/in/equipleft"
+			  "output" : "/actions/menu/in/equipsecondary"
 			}
 		  },
 		  "mode" : "button",

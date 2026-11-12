@@ -31,11 +31,27 @@ enum GameInputContext : uint32_t {
 constexpr auto InvalidInputContext = kContextCount;
 
 enum Hand {
-	HandLeft,
 	HandRight,
+	HandLeft,
 	HandCount,
 	HandNone = 0xFF
 };
+
+// while Hand represent physical hands, ControllerColumn represents which "controller state column" of two (primary/secondary) the action should write its state to
+// by default primary is right, and secondary is left, but they are swapped in the left-handed mode, because the game would then read the primary column for the left controller
+enum ControllerColumn {
+	ConPrimary = HandRight,
+	ConSecondary = HandLeft,
+	ConCount = HandCount,
+	ConNone = HandNone,
+};
+
+inline ControllerColumn GetControllerColumnForHand(Hand hand, bool leftHanded) {
+	if (!leftHanded) return (ControllerColumn)hand;
+	if (hand == HandLeft) return ConPrimary;
+	if (hand == HandRight) return ConSecondary;
+	return ConNone;
+}
 
 enum ActionType {
 	ActionTypeButton, // boolean, a bit in ulButtonPressed
@@ -66,7 +82,7 @@ inline vrnew::EVRControllerAxisType GetControllerAxisType([[maybe_unused]] int a
 // we need to transform that into a per-hand controller state value, which is then mapped by the game to an actual action
 // through controlmapvr.txt
 struct ActionLegacyControl {
-	Hand hand;
+	ControllerColumn column;
 
 	union {
 		uint8_t code;
@@ -108,6 +124,8 @@ struct ActionDef {
 enum ActionFlags {
 	ActionFlagMovement = 1,
 	ActionFlagMenuNav = 2,
+	ActionFlagSwapInLeftHandedMode = 4, // this basically preserves the physical controller hand in left-hand mode
+	ActionFlagPreventMenuUserEvents = 8,
 };
 
 // known legacy button codes for sensible re-use
@@ -144,111 +162,110 @@ namespace actionData {
 	// TODO: what is Favor context, it has the cancel button, check and bind. is it the follower "i want you to do something one?"
 	inline constexpr ActionDef defs[] = {
 		// @formatter:off preserve table layout
-		// NOTE: PLANCK (activeragdoll) relies on the first joystick input to determine movement for power attacks!
-		// TODO: it also checks for g_leftHandedMode, so we should switch them ideally, but handedness is a bigger topic...
-		{"/actions/gameplay/in/Move",          {kContext_Gameplay, 0, true}, ActionTypeAxis2, {HandLeft,  AxisJoystick}, ActionFlagMovement},
-		{"/actions/gameplay/in/TurnJumpSneak", {kContext_Gameplay, 0, true}, ActionTypeAxis2, {HandRight, AxisJoystick}, ActionFlagMovement},
-		{"/actions/gameplay/in/Turn",          {kContext_Gameplay, 0, true}, ActionTypeAxis1, {HandRight, AxisJoystick}, ActionFlagMovement}, // allow binding turning-only, this is intentionally Axis1 so we zero out the y value, so the game doesn't do jump/sneak
+		// NOTE: PLANCK (activeragdoll) relies on the left (right in left-handed mode) aka secondary controller's first joystick input to determine movement for power attacks!
+		{"/actions/gameplay/in/Move",             {kContext_Gameplay, 0, true}, ActionTypeAxis2, {ConSecondary, AxisJoystick}, ActionFlagMovement},
+		{"/actions/gameplay/in/TurnJumpSneak",    {kContext_Gameplay, 0, true}, ActionTypeAxis2, {ConPrimary,   AxisJoystick}, ActionFlagMovement},
+		{"/actions/gameplay/in/Turn",             {kContext_Gameplay, 0, true}, ActionTypeAxis1, {ConPrimary,   AxisJoystick}, ActionFlagMovement}, // allow binding turning-only, this is intentionally Axis1 so we zero out the y value, so the game doesn't do jump/sneak
 
-		{"/actions/gameplay/in/MoveForward",   {kContext_Gameplay, 0, true}, ActionTypeButton, {HandLeft, 0x0d}, ActionFlagMovement},
-		{"/actions/gameplay/in/MoveBack",      {kContext_Gameplay, 0, true}, ActionTypeButton, {HandLeft, 0x0e}, ActionFlagMovement},
-		{"/actions/gameplay/in/MoveLeft",      {kContext_Gameplay, 0, true}, ActionTypeButton, {HandLeft, 0x0f}, ActionFlagMovement},
-		{"/actions/gameplay/in/MoveRight",     {kContext_Gameplay, 0, true}, ActionTypeButton, {HandLeft, 0x10}, ActionFlagMovement},
+		{"/actions/gameplay/in/MoveForward",      {kContext_Gameplay, 0, true}, ActionTypeButton, {ConSecondary, 0x0d}, ActionFlagMovement},
+		{"/actions/gameplay/in/MoveBack",         {kContext_Gameplay, 0, true}, ActionTypeButton, {ConSecondary, 0x0e}, ActionFlagMovement},
+		{"/actions/gameplay/in/MoveLeft",         {kContext_Gameplay, 0, true}, ActionTypeButton, {ConSecondary, 0x0f}, ActionFlagMovement},
+		{"/actions/gameplay/in/MoveRight",        {kContext_Gameplay, 0, true}, ActionTypeButton, {ConSecondary, 0x10}, ActionFlagMovement},
 
-		{"/actions/gameplay/in/LeftTrigger",   {kContext_Gameplay, 0, true}, ActionTypeButton, {HandLeft,  KnownButtons::Trigger}},
-		{"/actions/gameplay/in/RightTrigger",  {kContext_Gameplay, 0, true}, ActionTypeButton, {HandRight, KnownButtons::Trigger}},
-		{"/actions/gameplay/in/LeftGrip",      {kContext_Gameplay, 0, true}, ActionTypeButton, {HandLeft,  KnownButtons::Grip}},
-		{"/actions/gameplay/in/RightGrip",     {kContext_Gameplay, 0, true}, ActionTypeButton, {HandRight, KnownButtons::Grip}},
+		{"/actions/gameplay/in/PrimaryTrigger",   {kContext_Gameplay, 0, true}, ActionTypeButton, {ConPrimary,   KnownButtons::Trigger}},
+		{"/actions/gameplay/in/SecondaryTrigger", {kContext_Gameplay, 0, true}, ActionTypeButton, {ConSecondary, KnownButtons::Trigger}},
+		{"/actions/gameplay/in/PrimaryGrip",      {kContext_Gameplay, 0, true}, ActionTypeButton, {ConPrimary,   KnownButtons::Grip}},
+		{"/actions/gameplay/in/SecondaryGrip",    {kContext_Gameplay, 0, true}, ActionTypeButton, {ConSecondary, KnownButtons::Grip}},
 
-		{"/actions/gameplay/in/Jump",          {kContext_Gameplay, 0, true}, ActionTypeButton, {HandRight, 0x03}},
-		{"/actions/gameplay/in/Sneak",         {kContext_Gameplay, 0, true}, ActionTypeButton, {HandRight, KnownButtons::Joystick}},
-		{"/actions/gameplay/in/Sprint",        {kContext_Gameplay, 0, true}, ActionTypeButton, {HandLeft,  KnownButtons::Joystick}},
-		{"/actions/gameplay/in/Activate",      {kContext_Gameplay, 0, true}, ActionTypeButton, {HandRight, KnownButtons::AX}},
-		{"/actions/gameplay/in/TweenMenu",     {kContext_Gameplay, 0, true}, ActionTypeButton, {HandLeft,  KnownButtons::AX}},
+		{"/actions/gameplay/in/Jump",             {kContext_Gameplay, 0, true}, ActionTypeButton, {ConPrimary,   0x03}},
+		{"/actions/gameplay/in/Sneak",            {kContext_Gameplay, 0, true}, ActionTypeButton, {ConPrimary,   KnownButtons::Joystick}},
+		{"/actions/gameplay/in/Sprint",           {kContext_Gameplay, 0, true}, ActionTypeButton, {ConSecondary, KnownButtons::Joystick}},
+		{"/actions/gameplay/in/Activate",         {kContext_Gameplay, 0, true}, ActionTypeButton, {ConPrimary,   KnownButtons::AX}},
+		{"/actions/gameplay/in/TweenMenu",        {kContext_Gameplay, 0, true}, ActionTypeButton, {ConSecondary, KnownButtons::AX}},
 
-		{"/actions/gameplay/in/OpenMagic",     {kContext_Gameplay, 0, true}, ActionTypeButton, {HandRight, 0x04}},
-		{"/actions/gameplay/in/OpenItems",     {kContext_Gameplay, 0, true}, ActionTypeButton, {HandRight, 0x06}},
-		{"/actions/gameplay/in/OpenSkills",    {kContext_Gameplay, 0, true}, ActionTypeButton, {HandRight, 0x08}},
-		{"/actions/gameplay/in/OpenMap",       {kContext_Gameplay, 0, true}, ActionTypeButton, {HandRight, 0x09}},
+		{"/actions/gameplay/in/OpenMagic",        {kContext_Gameplay, 0, true}, ActionTypeButton, {ConPrimary, 0x04}},
+		{"/actions/gameplay/in/OpenItems",        {kContext_Gameplay, 0, true}, ActionTypeButton, {ConPrimary, 0x06}},
+		{"/actions/gameplay/in/OpenSkills",       {kContext_Gameplay, 0, true}, ActionTypeButton, {ConPrimary, 0x08}},
+		{"/actions/gameplay/in/OpenMap",          {kContext_Gameplay, 0, true}, ActionTypeButton, {ConPrimary, 0x09}},
 
-		{"/actions/gameplay/in/ReadyWeapon",   {kContext_Gameplay, 0, true}, ActionTypeButton, {HandLeft,  0x04}},
-		{"/actions/gameplay/in/ShoutPower",    {kContext_Gameplay, 0, true}, ActionTypeButton, {HandRight, 0x05}},
-		{"/actions/gameplay/in/Favorites",     {kContext_Gameplay, 0, true}, ActionTypeButton, {HandRight, KnownButtons::BY}},
-		{"/actions/gameplay/in/Wait",          {kContext_Gameplay, 0, true}, ActionTypeButton, {HandLeft,  0x08}},
-		{"/actions/gameplay/in/Journal",       {kContext_Gameplay, 0, true}, ActionTypeButton, {HandLeft,  KnownButtons::BY}},
-		{"/actions/gameplay/in/QuickSave",     {kContext_Gameplay, 0, true}, ActionTypeButton, {HandLeft,  0x05}},
-		{"/actions/gameplay/in/QuickLoad",     {kContext_Gameplay, 0, true}, ActionTypeButton, {HandLeft,  0x06}},
+		{"/actions/gameplay/in/ReadyWeapon",      {kContext_Gameplay, 0, true}, ActionTypeButton, {ConSecondary, 0x04}},
+		{"/actions/gameplay/in/ShoutPower",       {kContext_Gameplay, 0, true}, ActionTypeButton, {ConPrimary,   0x05}},
+		{"/actions/gameplay/in/Favorites",        {kContext_Gameplay, 0, true}, ActionTypeButton, {ConPrimary,   KnownButtons::BY}},
+		{"/actions/gameplay/in/Wait",             {kContext_Gameplay, 0, true}, ActionTypeButton, {ConSecondary, 0x08}},
+		{"/actions/gameplay/in/Journal",          {kContext_Gameplay, 0, true}, ActionTypeButton, {ConSecondary, KnownButtons::BY}},
+		{"/actions/gameplay/in/QuickSave",        {kContext_Gameplay, 0, true}, ActionTypeButton, {ConSecondary, 0x05}},
+		{"/actions/gameplay/in/QuickLoad",        {kContext_Gameplay, 0, true}, ActionTypeButton, {ConSecondary, 0x06}},
 
 		// buttons for mods, let the mods decide in which contexts they work, i guess
-		{"/actions/gameplay/in/LeftAxis3Button",  {kContext_Gameplay, 0}, ActionTypeButton, {HandLeft,  KnownButtons::Axis3}},
-		{"/actions/gameplay/in/RightAxis3Button", {kContext_Gameplay, 0}, ActionTypeButton, {HandRight, KnownButtons::Axis3}},
-		{"/actions/gameplay/in/LeftAxis4Button",  {kContext_Gameplay, 0}, ActionTypeButton, {HandLeft,  KnownButtons::Axis4}},
-		{"/actions/gameplay/in/RightAxis4Button", {kContext_Gameplay, 0}, ActionTypeButton, {HandRight, KnownButtons::Axis4}},
+		{"/actions/gameplay/in/PrimaryAxis3Button",    {kContext_Gameplay, 0}, ActionTypeButton, {ConPrimary,   KnownButtons::Axis3}},
+		{"/actions/gameplay/in/SecondaryAxis3Button",  {kContext_Gameplay, 0}, ActionTypeButton, {ConSecondary, KnownButtons::Axis3}},
+		{"/actions/gameplay/in/PrimaryAxis4Button",    {kContext_Gameplay, 0}, ActionTypeButton, {ConPrimary,   KnownButtons::Axis4}},
+		{"/actions/gameplay/in/SecondaryAxis4Button",  {kContext_Gameplay, 0}, ActionTypeButton, {ConSecondary, KnownButtons::Axis4}},
 
-		{"/actions/gameplay/in/LeftTriggerTouch",  {kContext_Gameplay, 0}, ActionTypeTouch, {HandLeft,  KnownButtons::Trigger}},
-		{"/actions/gameplay/in/RightTriggerTouch", {kContext_Gameplay, 0}, ActionTypeTouch, {HandRight, KnownButtons::Trigger}},
-		{"/actions/gameplay/in/LeftGripTouch",     {kContext_Gameplay, 0}, ActionTypeTouch, {HandLeft,  KnownButtons::Grip}},
-		{"/actions/gameplay/in/RightGripTouch",    {kContext_Gameplay, 0}, ActionTypeTouch, {HandRight, KnownButtons::Grip}},
-		{"/actions/gameplay/in/LeftThumbTouch",    {kContext_Gameplay, 0}, ActionTypeTouch, {HandLeft,  KnownButtons::Joystick}},
-		{"/actions/gameplay/in/RightThumbTouch",   {kContext_Gameplay, 0}, ActionTypeTouch, {HandRight, KnownButtons::Joystick}},
+		{"/actions/gameplay/in/PrimaryTriggerTouch",   {kContext_Gameplay, 0}, ActionTypeTouch, {ConPrimary,   KnownButtons::Trigger}},
+		{"/actions/gameplay/in/SecondaryTriggerTouch", {kContext_Gameplay, 0}, ActionTypeTouch, {ConSecondary, KnownButtons::Trigger}},
+		{"/actions/gameplay/in/PrimaryGripTouch",      {kContext_Gameplay, 0}, ActionTypeTouch, {ConPrimary,   KnownButtons::Grip}},
+		{"/actions/gameplay/in/SecondaryGripTouch",    {kContext_Gameplay, 0}, ActionTypeTouch, {ConSecondary, KnownButtons::Grip}},
+		{"/actions/gameplay/in/PrimaryThumbTouch",     {kContext_Gameplay, 0}, ActionTypeTouch, {ConPrimary,   KnownButtons::Joystick}},
+		{"/actions/gameplay/in/SecondaryThumbTouch",   {kContext_Gameplay, 0}, ActionTypeTouch, {ConSecondary, KnownButtons::Joystick}},
 
 		// TODO: Hotkey(1-8) buttons - do they work in VR? if so they could be used for mods in addition to Axis3/Axis4
 		// TODO: we should probably have a separate set for item menus, in which one could e.g. bind Left/Right to the same buttons as journal TabLeft/TabRight for consistency
 		// NOTE: this is placed above Accept, so it can take priority if used within the same context
-		{"/actions/menu/in/EquipLeft",         {kContext_ItemMenu, StackedActions::MenuSelect}, ActionTypeButton, {HandLeft,  KnownButtons::Trigger}},
-		{"/actions/menu/in/EquipRight",        {kContext_ItemMenu, StackedActions::MenuSelect}, ActionTypeButton, {HandRight, KnownButtons::Trigger}},
+		{"/actions/menu/in/EquipPrimary",      {kContext_ItemMenu, StackedActions::MenuSelect}, ActionTypeButton, {ConPrimary,   KnownButtons::Trigger}},
+		{"/actions/menu/in/EquipSecondary",    {kContext_ItemMenu, StackedActions::MenuSelect}, ActionTypeButton, {ConSecondary, KnownButtons::Trigger}},
 
-		{"/actions/menu/in/Accept",            {kContext_MenuMode, StackedActions::MenuSelect}, ActionTypeButton, {HandRight, KnownButtons::AX}},
-		{"/actions/menu/in/Cancel",            {kContext_MenuMode, 0}, ActionTypeButton, {HandRight, KnownButtons::Grip}},
-		{"/actions/menu/in/ActionA",           {kContext_MenuMode, 0}, ActionTypeButton, {HandLeft, KnownButtons::AX}}, // drop items / take all / craft
-		{"/actions/menu/in/ActionB",           {kContext_MenuMode, 0}, ActionTypeButton, {HandLeft, KnownButtons::BY}}, // favorite / search (in crafting menus)
-		{"/actions/menu/in/Up",                {kContext_MenuMode, StackedActions::MenuNav}, ActionTypeButton, {HandRight, 0x03}, ActionFlagMenuNav},
-		{"/actions/menu/in/Down",              {kContext_MenuMode, StackedActions::MenuNav}, ActionTypeButton, {HandRight, 0x04}, ActionFlagMenuNav},
-		{"/actions/menu/in/Left",              {kContext_MenuMode, StackedActions::MenuNav}, ActionTypeButton, {HandRight, 0x05}, ActionFlagMenuNav},
-		{"/actions/menu/in/Right",             {kContext_MenuMode, StackedActions::MenuNav}, ActionTypeButton, {HandRight, 0x06}, ActionFlagMenuNav},
+		{"/actions/menu/in/Accept",            {kContext_MenuMode, StackedActions::MenuSelect}, ActionTypeButton, {ConPrimary, KnownButtons::AX}},
+		{"/actions/menu/in/Cancel",            {kContext_MenuMode, 0}, ActionTypeButton, {ConPrimary,   KnownButtons::Grip}},
+		{"/actions/menu/in/ActionA",           {kContext_MenuMode, 0}, ActionTypeButton, {ConSecondary, KnownButtons::AX}}, // drop items / take all / craft
+		{"/actions/menu/in/ActionB",           {kContext_MenuMode, 0}, ActionTypeButton, {ConSecondary, KnownButtons::BY}}, // favorite / search (in crafting menus)
+		{"/actions/menu/in/Up",                {kContext_MenuMode, StackedActions::MenuNav}, ActionTypeButton, {ConPrimary, 0x03}, ActionFlagMenuNav},
+		{"/actions/menu/in/Down",              {kContext_MenuMode, StackedActions::MenuNav}, ActionTypeButton, {ConPrimary, 0x04}, ActionFlagMenuNav},
+		{"/actions/menu/in/Left",              {kContext_MenuMode, StackedActions::MenuNav}, ActionTypeButton, {ConPrimary, 0x05}, ActionFlagMenuNav},
+		{"/actions/menu/in/Right",             {kContext_MenuMode, StackedActions::MenuNav}, ActionTypeButton, {ConPrimary, 0x06}, ActionFlagMenuNav},
 
-		{"/actions/menu/in/TabLeft",           {kContext_Journal, 0}, ActionTypeButton, {HandLeft,  0x08}},
-		{"/actions/menu/in/TabRight",          {kContext_Journal, 0}, ActionTypeButton, {HandRight, 0x08}},
+		{"/actions/menu/in/TabLeft",           {kContext_Journal, 0}, ActionTypeButton, {ConSecondary, 0x08}, ActionFlagSwapInLeftHandedMode},
+		{"/actions/menu/in/TabRight",          {kContext_Journal, 0}, ActionTypeButton, {ConPrimary,   0x08}, ActionFlagSwapInLeftHandedMode},
 
-		{"/actions/menu/in/ZoomItem",          {kContext_ItemMenu, 0}, ActionTypeButton, {HandRight, KnownButtons::Joystick}},
-		{"/actions/menu/in/RotateItem",        {kContext_ItemMenu, 0}, ActionTypeAxis2,  {HandLeft,  AxisJoystick}},
+		{"/actions/menu/in/ZoomItem",          {kContext_ItemMenu, 0}, ActionTypeButton, {ConPrimary,   KnownButtons::Joystick}},
+		{"/actions/menu/in/RotateItem",        {kContext_ItemMenu, 0}, ActionTypeAxis2,  {ConSecondary, AxisJoystick}},
 
-		{"/actions/menu/in/ChargeItem",        {kContext_Inventory, 0}, ActionTypeButton, {HandLeft, 0x03}},
+		{"/actions/menu/in/ChargeItem",        {kContext_Inventory, 0}, ActionTypeButton, {ConSecondary, 0x03}},
 
-		// TODO: check how this works with left-handedness (and how to deal with it within the context of skyrim in general)
-		{"/actions/map/in/Click",              {kContext_Map, 0, true}, ActionTypeButton, {HandRight, KnownButtons::Trigger}},
-		{"/actions/map/in/ExitMap",            {kContext_Map, 0, true}, ActionTypeButton, {HandRight, KnownButtons::Grip}},
-		{"/actions/map/in/LocalMap",           {kContext_Map, 0, true}, ActionTypeButton, {HandRight, KnownButtons::AX}},
-		{"/actions/map/in/PlayerPosition",     {kContext_Map, 0, true}, ActionTypeButton, {HandRight, KnownButtons::BY}},
-		{"/actions/map/in/Journal",            {kContext_Map, 0, true}, ActionTypeButton, {HandLeft,  KnownButtons::BY}},
-		{"/actions/map/in/Move",               {kContext_Map, 0, true}, ActionTypeAxis2,  {HandLeft,  AxisJoystick}}, // NOTE: there's no "Move" binding for Map Menu context, but emitting the gameplay move axis does the trick
-		{"/actions/map/in/Turn",               {kContext_Map, 0, true}, ActionTypeAxis2,  {HandRight, AxisJoystick}}, // NOTE: the "Look" can be left unbound too, emitting the gameplay look axis does the trick
+		{"/actions/map/in/Click",              {kContext_Map, 0, true}, ActionTypeButton, {ConPrimary,   KnownButtons::Trigger}},
+		{"/actions/map/in/ExitMap",            {kContext_Map, 0, true}, ActionTypeButton, {ConPrimary,   KnownButtons::Grip}},
+		{"/actions/map/in/LocalMap",           {kContext_Map, 0, true}, ActionTypeButton, {ConPrimary,   KnownButtons::AX}},
+		{"/actions/map/in/PlayerPosition",     {kContext_Map, 0, true}, ActionTypeButton, {ConPrimary,   KnownButtons::BY}},
+		{"/actions/map/in/Journal",            {kContext_Map, 0, true}, ActionTypeButton, {ConSecondary, KnownButtons::BY}},
+		{"/actions/map/in/Move",               {kContext_Map, 0, true}, ActionTypeAxis2,  {ConSecondary, AxisJoystick}}, // NOTE: there's no "Move" binding for Map Menu context, but emitting the gameplay move axis does the trick
+		{"/actions/map/in/Turn",               {kContext_Map, 0, true}, ActionTypeAxis2,  {ConPrimary,   AxisJoystick}}, // NOTE: the "Look" can be left unbound too, emitting the gameplay look axis does the trick
 
-		{"/actions/lockpicking/in/RotatePick", {kContext_Lockpicking, 0}, ActionTypeAxis2,  {HandLeft,  AxisJoystick}},
-		{"/actions/lockpicking/in/RotateLock", {kContext_Lockpicking, 0}, ActionTypeAxis2,  {HandRight, AxisJoystick}},
-		{"/actions/lockpicking/in/Cancel",     {kContext_Lockpicking, 0}, ActionTypeButton, {HandRight, KnownButtons::Grip}},
+		{"/actions/lockpicking/in/RotatePick", {kContext_Lockpicking, 0}, ActionTypeAxis2,  {ConSecondary, AxisJoystick}},
+		{"/actions/lockpicking/in/RotateLock", {kContext_Lockpicking, 0}, ActionTypeAxis2,  {ConPrimary,   AxisJoystick}},
+		{"/actions/lockpicking/in/Cancel",     {kContext_Lockpicking, 0}, ActionTypeButton, {ConPrimary,   KnownButtons::Grip}},
 
-		{"/actions/skills/in/Navigate",        {kContext_Stats, StackedActions::MenuNav, true},    ActionTypeAxis2,  {HandLeft,  AxisJoystick}},
-		{"/actions/skills/in/Select",          {kContext_Stats, StackedActions::MenuSelect, true}, ActionTypeButton, {HandRight, KnownButtons::Trigger}},
+		{"/actions/skills/in/Navigate",        {kContext_Stats, StackedActions::MenuNav, true},    ActionTypeAxis2,  {ConSecondary, AxisJoystick}},
+		{"/actions/skills/in/Select",          {kContext_Stats, StackedActions::MenuSelect, true}, ActionTypeButton, {ConPrimary,   KnownButtons::Trigger}},
 
 		// to support ImGui VR Helper we emulate the legacy buttons it expects (with its default open/close combos) in a special fake context
 		// NOTE: some actions are listed twice to emit two buttons at once, this is kind of a hack, but it's fine for now
-		{"/actions/menu/in/OpenImGui",         {kContext_MenuMode, 0},     ActionTypeButton, {HandLeft,  KnownButtons::AX}},
-		{"/actions/menu/in/OpenImGui",         {kContext_MenuMode, 0},     ActionTypeButton, {HandLeft,  KnownButtons::BY}},
-		{"/actions/imgui/in/Close",            {kContext_ImGuiHelper, 0},  ActionTypeButton, {HandLeft,  KnownButtons::Grip}},
-		{"/actions/imgui/in/Close",            {kContext_ImGuiHelper, 0},  ActionTypeButton, {HandRight, KnownButtons::Grip}},
-		{"/actions/imgui/in/LeftTrigger",      {kContext_ImGuiHelper, 0},  ActionTypeButton, {HandLeft,  KnownButtons::Trigger}},
-		{"/actions/imgui/in/RightTrigger",     {kContext_ImGuiHelper, 0},  ActionTypeButton, {HandRight, KnownButtons::Trigger}},
-		{"/actions/imgui/in/LeftGrip",         {kContext_ImGuiHelper, 0},  ActionTypeButton, {HandLeft,  KnownButtons::Grip}},
-		{"/actions/imgui/in/RightGrip",        {kContext_ImGuiHelper, 0},  ActionTypeButton, {HandRight, KnownButtons::Grip}},
-		{"/actions/imgui/in/LeftStick",        {kContext_ImGuiHelper, 0},  ActionTypeAxis2,  {HandLeft,  AxisJoystick}},
-		{"/actions/imgui/in/RightStick",       {kContext_ImGuiHelper, 0},  ActionTypeAxis2,  {HandRight, AxisJoystick}},
-		{"/actions/imgui/in/LeftStickButton",  {kContext_ImGuiHelper, 0},  ActionTypeButton, {HandLeft,  KnownButtons::Joystick}},
-		{"/actions/imgui/in/RightStickButton", {kContext_ImGuiHelper, 0},  ActionTypeButton, {HandRight, KnownButtons::Joystick}},
-		{"/actions/imgui/in/LeftAX",           {kContext_ImGuiHelper, 0},  ActionTypeButton, {HandLeft,  KnownButtons::AX}},
-		{"/actions/imgui/in/LeftBY",           {kContext_ImGuiHelper, 0},  ActionTypeButton, {HandLeft,  KnownButtons::BY}},
-		{"/actions/imgui/in/RightAX",          {kContext_ImGuiHelper, 0},  ActionTypeButton, {HandRight, KnownButtons::AX}},
-		{"/actions/imgui/in/RightBY",          {kContext_ImGuiHelper, 0},  ActionTypeButton, {HandRight, KnownButtons::BY}},
+		{"/actions/menu/in/OpenImGui",             {kContext_MenuMode, 0},    ActionTypeButton, {ConSecondary, KnownButtons::AX}, ActionFlagPreventMenuUserEvents},
+		{"/actions/menu/in/OpenImGui",             {kContext_MenuMode, 0},    ActionTypeButton, {ConSecondary, KnownButtons::BY}, ActionFlagPreventMenuUserEvents},
+
+		{"/actions/imgui/in/Close",                {kContext_ImGuiHelper, 0}, ActionTypeButton, {ConSecondary, KnownButtons::Grip}},
+		{"/actions/imgui/in/Close",                {kContext_ImGuiHelper, 0}, ActionTypeButton, {ConPrimary,   KnownButtons::Grip}},
+		{"/actions/imgui/in/PrimaryTrigger",       {kContext_ImGuiHelper, 0}, ActionTypeButton, {ConPrimary,   KnownButtons::Trigger}},
+		{"/actions/imgui/in/SecondaryTrigger",     {kContext_ImGuiHelper, 0}, ActionTypeButton, {ConSecondary, KnownButtons::Trigger}},
+		{"/actions/imgui/in/PrimaryGrip",          {kContext_ImGuiHelper, 0}, ActionTypeButton, {ConPrimary,   KnownButtons::Grip}},
+		{"/actions/imgui/in/SecondaryGrip",        {kContext_ImGuiHelper, 0}, ActionTypeButton, {ConSecondary, KnownButtons::Grip}},
+		{"/actions/imgui/in/PrimaryStick",         {kContext_ImGuiHelper, 0}, ActionTypeAxis2,  {ConPrimary,   AxisJoystick}},
+		{"/actions/imgui/in/SecondaryStick",       {kContext_ImGuiHelper, 0}, ActionTypeAxis2,  {ConSecondary, AxisJoystick}},
+		{"/actions/imgui/in/PrimaryStickButton",   {kContext_ImGuiHelper, 0}, ActionTypeButton, {ConPrimary,   KnownButtons::Joystick}},
+		{"/actions/imgui/in/SecondaryStickButton", {kContext_ImGuiHelper, 0}, ActionTypeButton, {ConSecondary, KnownButtons::Joystick}},
+		{"/actions/imgui/in/PrimaryAX",            {kContext_ImGuiHelper, 0}, ActionTypeButton, {ConPrimary,   KnownButtons::AX}},
+		{"/actions/imgui/in/PrimaryBY",            {kContext_ImGuiHelper, 0}, ActionTypeButton, {ConPrimary,   KnownButtons::BY}},
+		{"/actions/imgui/in/SecondaryAX",          {kContext_ImGuiHelper, 0}, ActionTypeButton, {ConSecondary, KnownButtons::AX}},
+		{"/actions/imgui/in/SecondaryBY",          {kContext_ImGuiHelper, 0}, ActionTypeButton, {ConSecondary, KnownButtons::BY}},
 		// @formatter:on
 	};
 
@@ -283,8 +300,8 @@ namespace actionData {
 		{"/actions/menu/in/Right",  kContext_Favorites},
 
 		// also equipment buttons work the same way as in the items menu
-		{"/actions/menu/in/EquipLeft",  kContext_Favorites},
-		{"/actions/menu/in/EquipRight", kContext_Favorites},
+		{"/actions/menu/in/EquipPrimary",   kContext_Favorites},
+		{"/actions/menu/in/EquipSecondary", kContext_Favorites},
 
 		// race/sex menu has the same tab buttons as journal
 		{"/actions/menu/in/TabLeft",  kContext_RaceSexMenu},

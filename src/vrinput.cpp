@@ -13,7 +13,7 @@ namespace {
 	vrnew::VRActiveActionSet_t frameActionSets[actionSetCount];
 
 	vrnew::VRActionHandle_t actionHandles[actionCount];
-	uint64_t handSupportedButtons[HandCount]{};
+	uint64_t controllerSupportedButtons[ConCount]{};
 	vrnew::VRActionHandle_t handHapticActions[HandCount]{};
 	vrnew::VRActionHandle_t handSkeletonActions[HandCount]{};
 
@@ -22,42 +22,54 @@ namespace {
 	uint32_t lastActionPressedContextStackGeneration[actionCount];
 	constexpr uint32_t NotPressedGeneration = 0;
 
-	vrnew::VRControllerState_t controllerStates[HandCount];
+	vrnew::VRControllerState_t controllerStates[ConCount];
 	std::mutex controllerStatesMutex; // reads can happen in other threads
 
 	// we track "orphan" button releases, when a button action is still physically pressed,
 	// but stops contributing to ulButtonPressed due to input context changes.
 	// we use this data in the MenuControls::ProcessEvent hook to zero the "up" events for
 	// such buttons so they don't have any effect (i.e. Map Mode "Click" release being handled as mouse hover)
-	uint64_t orphanControllerButtonReleases[HandCount]{};
+	uint64_t orphanControllerButtonReleases[ConCount]{};
 	bool lastEffectivePressedButtonActions[actionCount]{};
+
+	uint64_t preventedMenuUserEventControllerButtons[ConCount]{};
 
 	bool isDMEEnabled = false;
 
+	// CommonLibSSE-NG uses the right/left terminology, but really it's primary/secondary, so I encapsulate this
+	RE::BSTrackedControllerDevice* GetPrimaryController() { return RE::BSInputDeviceManager::GetSingleton()->GetVRControllerRight(); }
+	RE::BSTrackedControllerDevice* GetSecondaryController() { return RE::BSInputDeviceManager::GetSingleton()->GetVRControllerLeft(); }
+
+	void RegisterControllerDeviceButton(RE::BSTrackedControllerDevice *controller, uint8_t code) {
+		auto &data = static_cast<RE::BSInputDevice *>(controller)->GetRuntimeData();
+		if (data.deviceButtons.contains(code)) return;
+
+		auto button = std::construct_at(RE::malloc<RE::BSInputDevice::InputButton>());
+		button->name = std::format("Button-{}", code);
+		button->keycode = code;
+		data.deviceButtons.insert({code, button});
+		data.buttonNameIDMap.insert({button->name, code});
+	}
+
 	// The game only accumulates held time for the button codes registered in deviceButtons.
 	// Without this, every frame would count a held button as a separate press.
+	// TODO: move this code into the InitVRInput actionDefs loop (next to controllerSupportedButtons setup)
+	//  if it's well-tested that we never need to setup again after init (this is only in a separate function
+	//  because there was a bug, now should be fixed by ForceOculusControllerDevices)
 	void SetupControllerDeviceButtons() {
-		auto manager = RE::BSInputDeviceManager::GetSingleton();
-		auto leftController = manager->GetVRControllerLeft();
-		auto rightController = manager->GetVRControllerRight();
+		auto primaryController = GetPrimaryController();
+		auto secondaryController = GetSecondaryController();
 
-		leftController->ResetButtonMaps();
-		rightController->ResetButtonMaps();
+		primaryController->ResetButtonMaps();
+		secondaryController->ResetButtonMaps();
 
 		for (const auto &actionDef: actionDefs) {
 			if (actionDef.type != ActionTypeButton) continue;
 			auto &control = actionDef.control;
 
-			auto controller = (control.hand == HandLeft) ? leftController : rightController;
-			auto &data = static_cast<RE::BSInputDevice *>(controller)->GetRuntimeData();
-
-			if (!data.deviceButtons.contains(control.code)) {
-				auto button = std::construct_at(RE::malloc<RE::BSInputDevice::InputButton>());
-				button->name = std::format("Button-{}", control.code);
-				button->keycode = control.code;
-				data.deviceButtons.insert({control.code, button});
-				data.buttonNameIDMap.insert({button->name, control.code});
-			}
+			bool bothControllers = actionDef.flags & ActionFlagSwapInLeftHandedMode;
+			if (bothControllers || control.column == ConPrimary) RegisterControllerDeviceButton(primaryController, control.code);
+			if (bothControllers || control.column == ConSecondary) RegisterControllerDeviceButton(secondaryController, control.code);
 		}
 	}
 
@@ -84,6 +96,26 @@ namespace {
 			logger::warn("HMD Device Type changed from {} to {}, should be Oculus ({})", (int) lastHmdDeviceType, (int) hmdDeviceType, (int) RE::BSVRInterface::HMDDeviceType::kOculus);
 			lastHmdDeviceType = hmdDeviceType;
 		}
+	}
+
+	bool IsLeftHandedMode() {
+		// CommonLib's RE::BSTrackedControllerDevice runtime data is wrong: it's put at 0x78 but there's a bogus uint64_t unk70 that shifts the data by 8 bytes
+		// TODO: contribute the fix to CommonlibSSE-NG
+		struct TrackedControllerDevice {
+			uint8_t _pad[0x78];
+			RE::ControllerDeviceHand hand;
+		};
+
+		// the RefreshVRControllerDevices method sets the "hand" field to left/right according to the game setting,
+		// and once that happens the handedness comes into effect (the game will poll tracked devices with respective roles)
+		auto primaryController = (TrackedControllerDevice*)GetPrimaryController();
+		return primaryController->hand == RE::ControllerDeviceHand::kLeft;
+	}
+
+	ControllerColumn GetActionControllerColumn(const ActionDef &actionDef, bool leftHandedMode) {
+		bool swap = leftHandedMode && (actionDef.flags & ActionFlagSwapInLeftHandedMode);
+		if (!swap) return actionDef.control.column;
+		else return actionDef.control.column == ConPrimary ? ConSecondary : ConPrimary;
 	}
 
 	RE::INPUT_DEVICE GetControllerInputDevice(RE::BSTrackedControllerDevice *controller) {
@@ -188,11 +220,10 @@ Hand GetHandForTrackedDevice(vrnew::IVRSystem *system, vrnew::TrackedDeviceIndex
 	return HandNone;
 }
 
-Hand GetHandForInputDevice(RE::INPUT_DEVICE device) {
-	auto manager = RE::BSInputDeviceManager::GetSingleton();
-	if (GetControllerInputDevice(manager->GetVRControllerLeft()) == device) return HandLeft;
-	if (GetControllerInputDevice(manager->GetVRControllerRight()) == device) return HandRight;
-	return HandNone;
+ControllerColumn GetControllerColumnForInputDevice(RE::INPUT_DEVICE device) {
+	if (GetControllerInputDevice(GetPrimaryController()) == device) return ConPrimary;
+	if (GetControllerInputDevice(GetSecondaryController()) == device) return ConSecondary;
+	return ConNone;
 }
 
 bool InitVRInput() {
@@ -255,8 +286,16 @@ bool InitVRInput() {
 
 		lastActionPressedContextStackGeneration[actionIndex] = NotPressedGeneration;
 
-		if (actionDef.type == ActionTypeButton || actionDef.type == ActionTypeTouch)
-			handSupportedButtons[actionDef.control.hand] |= GetButtonCodeMask(actionDef.control.code);
+		if (actionDef.type == ActionTypeButton || actionDef.type == ActionTypeTouch) {
+			auto mask = GetButtonCodeMask(actionDef.control.code);
+			// since the action can appear in either controller at run-time (depending on left-handed mode), we simply register the button for both
+			if (actionDef.flags & ActionFlagSwapInLeftHandedMode) {
+				controllerSupportedButtons[ConPrimary] |= mask;
+				controllerSupportedButtons[ConSecondary] |= mask;
+			} else {
+				controllerSupportedButtons[actionDef.control.column] |= mask;
+			}
+		}
 	}
 
 	StoreAction("/actions/gameplay/out/LeftHaptic", &handHapticActions[HandLeft]);
@@ -282,6 +321,8 @@ void UpdateControllerStates() {
 	}
 
 	CheckHmdDeviceTypeIsOculus();
+
+	bool leftHandedMode = IsLeftHandedMode();
 
 	if (auto error = vrInput->UpdateActionState(frameActionSets, sizeof(frameActionSets[0]), actionSetCount); error != vrnew::VRInputError_None) {
 		logger::error("UpdateActionState returned error: {}", (int) error);
@@ -316,7 +357,7 @@ void UpdateControllerStates() {
 	// we could probably bookkeep the real changes, but I don't think it matters
 	static uint32_t nextPacketNum = 0;
 	uint32_t packetNum = ++nextPacketNum;
-	vrnew::VRControllerState_t nextControllerStates[HandCount]{}; // note the {} to zero the memory
+	vrnew::VRControllerState_t nextControllerStates[ConCount]{}; // note the {} to zero the memory
 	for (auto &state: nextControllerStates) state.unPacketNum = packetNum;
 
 	bool effectivePressedButtonActions[actionCount]{};
@@ -346,7 +387,7 @@ void UpdateControllerStates() {
 			}
 
 			auto &actionControl = actionDef.control;
-			auto &nextControllerState = nextControllerStates[actionControl.hand];
+			auto &nextControllerState = nextControllerStates[GetActionControllerColumn(actionDef, leftHandedMode)];
 
 			switch (actionDef.type) {
 				case ActionTypeButton: {
@@ -409,7 +450,8 @@ void UpdateControllerStates() {
 		}
 	}
 
-	uint64_t nextOrphanControllerButtonReleases[HandCount]{};
+	uint64_t nextOrphanControllerButtonReleases[ConCount]{};
+	uint64_t nextPreventedMenuUserEventControllerButtons[ConCount]{};
 	for (uint32_t actionIndex = 0; actionIndex < actionCount; actionIndex++) {
 		auto &actionDef = actionDefs[actionIndex];
 		if (actionDef.type == ActionTypeButton) {
@@ -417,10 +459,14 @@ void UpdateControllerStates() {
 			bool buttonIsPressed = effectivePressedButtonActions[actionIndex];
 			lastEffectivePressedButtonActions[actionIndex] = effectivePressedButtonActions[actionIndex];
 
+			if ((actionDef.flags & ActionFlagPreventMenuUserEvents) && (buttonWasPressed || buttonIsPressed)) {
+				nextPreventedMenuUserEventControllerButtons[GetActionControllerColumn(actionDef, leftHandedMode)] |= GetButtonCodeMask(actionDef.control.code);
+			}
+
 			// if the steamvr action is still pressed, but its controller state button is not - mark it as an "orphan" release
 			bool actionIsPressed = digitalActionData[actionIndex].bActive && digitalActionData[actionIndex].bState;
 			if (buttonWasPressed && !buttonIsPressed && actionIsPressed) {
-				nextOrphanControllerButtonReleases[actionDef.control.hand] |= GetButtonCodeMask(actionDef.control.code);
+				nextOrphanControllerButtonReleases[GetActionControllerColumn(actionDef, leftHandedMode)] |= GetButtonCodeMask(actionDef.control.code);
 			}
 		}
 	}
@@ -429,28 +475,41 @@ void UpdateControllerStates() {
 		std::lock_guard lock(controllerStatesMutex);
 		std::memcpy(controllerStates, nextControllerStates, sizeof(controllerStates));
 		std::memcpy(orphanControllerButtonReleases, nextOrphanControllerButtonReleases, sizeof(orphanControllerButtonReleases));
+		std::memcpy(preventedMenuUserEventControllerButtons, nextPreventedMenuUserEventControllerButtons, sizeof(preventedMenuUserEventControllerButtons));
 	}
 
 	if (IsVRIKFingerTrackingEnabled()) {
-		UpdateVRIKFingers(vrInput, HandLeft, handSkeletonActions[HandLeft], &nextControllerStates[HandLeft]);
-		UpdateVRIKFingers(vrInput, HandRight, handSkeletonActions[HandRight], &nextControllerStates[HandRight]);
+		// controller states hold "button touched" for primary/secondary. whether those are left or right depend on the left-handed mode
+		auto rightControllerState = &nextControllerStates[GetControllerColumnForHand(HandRight, leftHandedMode)];
+		auto leftControllerState = &nextControllerStates[GetControllerColumnForHand(HandLeft, leftHandedMode)];
+		UpdateVRIKFingers(vrInput, HandRight, handSkeletonActions[HandRight], rightControllerState);
+		UpdateVRIKFingers(vrInput, HandLeft, handSkeletonActions[HandLeft], leftControllerState);
 	}
 }
 
 vrnew::VRControllerState_t GetControllerState(Hand hand) {
 	// this can be called from any thread, so there's a lock
 	std::lock_guard lock(controllerStatesMutex);
-	return controllerStates[hand];
+	auto column = GetControllerColumnForHand(hand, IsLeftHandedMode());
+	return controllerStates[column];
 }
 
-bool IsOrphanControllerButtonRelease(Hand hand, uint32_t code) {
-	// this can be called from any thread, so there's a lock
+bool IsOrphanControllerButtonRelease(ControllerColumn column, uint32_t code) {
+	// this is likely never called from a different thread than UpdateControllerStates one, unless some mod
+	// does crazy things with MenuControls::ProcessEvent, but the lock should be harmless, so let's keep it
 	std::lock_guard lock(controllerStatesMutex);
-	return (orphanControllerButtonReleases[hand] & GetButtonCodeMask(code)) != 0;
+	return (orphanControllerButtonReleases[column] & GetButtonCodeMask(code)) != 0;
+}
+
+bool IsPreventedMenuUserEventControllerButton(ControllerColumn column, uint32_t code) {
+	// similarly to IsOrphanControllerButtonRelease, there's likely no thread safety issues, but the lock should be harmless nevertheless
+	std::lock_guard lock(controllerStatesMutex);
+	return (preventedMenuUserEventControllerButtons[column] & GetButtonCodeMask(code)) != 0;
 }
 
 uint64_t GetHandSupportedButtons(Hand hand) {
-	return handSupportedButtons[hand];
+	auto column = GetControllerColumnForHand(hand, IsLeftHandedMode());
+	return controllerSupportedButtons[column];
 }
 
 void TriggerHapticVibration(Hand hand, std::uint16_t durationMicroSec) {

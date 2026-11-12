@@ -1,3 +1,16 @@
+## 0.5.0 - 2026-11-12
+
+- Added support for left-handed mode. When using it, you need to also switch to the left-handed bindings in SteamVR (mirrored Frame/Index default bindings are provided).
+
+  BREAKING: the hand-dependent action names were changed from right/left to primary/secondary (labeled Main Hand/Off Hand in the UI), so if you have a custom SteamVR binding,
+  you'll have to rebind them (or just switch to the default and then apply your edits again). Sorry about this!
+
+  NOTE: the current ImGui VR Helper version (1.12.0) doesn't handle left-handed mode correctly: inside ImGui the controls are swapped, and to open it with the "Open ImGui" action
+  you need to change its open combo to the primary A/X + B/Y. To do that, with the game closed, set this line in `Data/SKSE/Plugins/ImGuiVRHelper.toml` (in MO2 it's usually in the overwrite folder):
+  `openMenuKeys = [7, 1]` (the default right-handed value is `[65543, 65537]`)
+
+- Fixed the "Open ImGui" action also triggering menu actions (e.g. "Action A/B").
+
 ## 0.4.0 - 2026-11-11
 
 - Added single-direction movement actions, so you could bind e.g. "toggle move forward". Also works with Dialogue Movement Enabler VR.

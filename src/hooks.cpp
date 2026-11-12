@@ -60,19 +60,31 @@ namespace {
 		heldDownSecs = 0.0f;
 	}
 
-	// swallow "orphan" button releases coming from actions that are still pressed but don't contribute to the controller state button mask anymore
+	// NOTE: the MenuControls::ProcessEvent hook will effectively change events for everyone, because MenuControls is the first sink
 	RE::BSEventNotifyControl Hook_MenuControlsProcessEvent(RE::MenuControls *self, RE::InputEvent *const *events, RE::BSTEventSource<RE::InputEvent *> *source) {
 		for (auto event = events ? *events : nullptr; event; event = event->next) {
 			auto button = event->AsButtonEvent();
-			if (button && button->IsUp()) {
-				if (auto hand = GetHandForInputDevice(event->GetDevice()); hand != HandNone) {
-					if (IsOrphanControllerButtonRelease(hand, button->GetIDCode())) {
-						if (spdlog::should_log(spdlog::level::debug))
-							logger::debug("Ignoring UI button release user event of a button pressed in another input context: device={} code={:#x} userEvent='{}'",
-										  (int) event->GetDevice(), button->GetIDCode(), button->GetUserEvent().c_str());
-						button->SetUserEvent(RE::BSFixedString{});
-					}
-				}
+			if (!button) continue;
+
+			auto column = GetControllerColumnForInputDevice(event->GetDevice());
+			if (column == ConNone) continue;
+
+			// swallow "orphan" button releases coming from actions that are still pressed but don't contribute to the controller state button mask anymore
+			// it is needed to avoid confusing Scaleform menus with button-up events "out of nowhere"
+			if (button->IsUp() && IsOrphanControllerButtonRelease(column, button->GetIDCode())) {
+				if (spdlog::should_log(spdlog::level::debug))
+					logger::debug("Ignoring UI button release user event of a button pressed in another input context: device={} code={:#x} userEvent='{}'",
+								  (int) event->GetDevice(), button->GetIDCode(), button->GetUserEvent().c_str());
+				button->SetUserEvent(RE::BSFixedString{});
+				continue;
+			}
+
+			// an action like OpenImGui emits the button codes that are mapped to other events in menu mode, and we don't want the menus to handle them
+			if (IsPreventedMenuUserEventControllerButton(column, button->GetIDCode())) {
+				if (spdlog::should_log(spdlog::level::debug))
+					logger::debug("Ignoring UI button user event of an action that prevents menu user events: device={} code={:#x} userEvent='{}'",
+								  (int) event->GetDevice(), button->GetIDCode(), button->GetUserEvent().c_str());
+				button->SetUserEvent(RE::BSFixedString{});
 			}
 		}
 		return origMenuControlsProcessEvent(self, events, source);
