@@ -194,6 +194,16 @@ namespace actionData {
 		{"/actions/gameplay/in/QuickSave",        {kContext_Gameplay, 0, true}, ActionTypeButton, {ConSecondary, 0x05}},
 		{"/actions/gameplay/in/QuickLoad",        {kContext_Gameplay, 0, true}, ActionTypeButton, {ConSecondary, 0x06}},
 
+		// hotkeys are completely unbound in vanilla, but the functionality works, so we can use them for e.g. quick weapon switching
+		{"/actions/gameplay/in/Hotkey1",          {kContext_Gameplay, 0}, ActionTypeButton, {ConPrimary, 0x11}},
+		{"/actions/gameplay/in/Hotkey2",          {kContext_Gameplay, 0}, ActionTypeButton, {ConPrimary, 0x12}},
+		{"/actions/gameplay/in/Hotkey3",          {kContext_Gameplay, 0}, ActionTypeButton, {ConPrimary, 0x13}},
+		{"/actions/gameplay/in/Hotkey4",          {kContext_Gameplay, 0}, ActionTypeButton, {ConPrimary, 0x14}},
+		{"/actions/gameplay/in/Hotkey5",          {kContext_Gameplay, 0}, ActionTypeButton, {ConPrimary, 0x15}},
+		{"/actions/gameplay/in/Hotkey6",          {kContext_Gameplay, 0}, ActionTypeButton, {ConPrimary, 0x16}},
+		{"/actions/gameplay/in/Hotkey7",          {kContext_Gameplay, 0}, ActionTypeButton, {ConPrimary, 0x17}},
+		{"/actions/gameplay/in/Hotkey8",          {kContext_Gameplay, 0}, ActionTypeButton, {ConPrimary, 0x18}},
+
 		// buttons for mods, let the mods decide in which contexts they work, i guess
 		{"/actions/gameplay/in/PrimaryAxis3Button",    {kContext_Gameplay, 0}, ActionTypeButton, {ConPrimary,   KnownButtons::Axis3}},
 		{"/actions/gameplay/in/SecondaryAxis3Button",  {kContext_Gameplay, 0}, ActionTypeButton, {ConSecondary, KnownButtons::Axis3}},
@@ -207,7 +217,6 @@ namespace actionData {
 		{"/actions/gameplay/in/PrimaryThumbTouch",     {kContext_Gameplay, 0}, ActionTypeTouch, {ConPrimary,   KnownButtons::Joystick}},
 		{"/actions/gameplay/in/SecondaryThumbTouch",   {kContext_Gameplay, 0}, ActionTypeTouch, {ConSecondary, KnownButtons::Joystick}},
 
-		// TODO: Hotkey(1-8) buttons - do they work in VR? if so they could be used for mods in addition to Axis3/Axis4
 		// TODO: we should probably have a separate set for item menus, in which one could e.g. bind Left/Right to the same buttons as journal TabLeft/TabRight for consistency (but check if that only makes sense for SkyUI)
 		// NOTE: this is placed above Accept, so it can take priority if used within the same context
 		{"/actions/menu/in/EquipPrimary",      {kContext_ItemMenu, StackedActions::MenuSelect}, ActionTypeButton, {ConPrimary,   KnownButtons::Trigger}},

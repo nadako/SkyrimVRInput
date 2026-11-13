@@ -1,3 +1,7 @@
+## 0.5.2 - 2026-11-13
+
+- Added Skyrim's Hotkey 1-8 actions. In the base game they work similarly as in non-VR (assign hotkey in favorites, then press in-game to equip), some mods make more use of them.
+
 ## 0.5.1 - 2026-11-13
 
 - Fixed follower's favor interaction ("I want you to do something" dialogue option, or holding "Activate" on them). It uses Menu Cancel action for cancelling the favor.

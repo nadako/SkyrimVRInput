@@ -9,6 +9,11 @@ target_file = root_dir / "data/interface/controls/pc/controlmapvr.txt"
 # input context -> event -> (right, left)
 # our steamvr actions map into the hand+code pair and this maps those into skyrim input events
 
+# NOTE: the last column in the file (we don't touch it at all currently) is a bitmask of UserEvents::USER_EVENT_FLAG
+# for a button press to generate an event, its mask needs to fully match (&) the current mask set in ControlMap's enabledControls
+# if it doesn't match, the button processing stops (so no underlying input contexts are handled!). The kVATS in Skyrim is some kind of
+# "master gameplay" bit (obviously unrelated to fallout's VATS). some menus (e.g. Dialogue Menu) clear it
+
 menu_mode_basic_button_codes = {
     "Accept": (0x07, None),
     "Cancel": (0x02, None),
@@ -61,6 +66,14 @@ button_codes = {
         "Journal": (None, 0x01), # Journal seem to behave like Pause, opening the same exact tab...
         "Quicksave": (None, 0x05),
         "Quickload": (None, 0x06),
+        "Hotkey1": (0x11, None),
+        "Hotkey2": (0x12, None),
+        "Hotkey3": (0x13, None),
+        "Hotkey4": (0x14, None),
+        "Hotkey5": (0x15, None),
+        "Hotkey6": (0x16, None),
+        "Hotkey7": (0x17, None),
+        "Hotkey8": (0x18, None),
     },
     "Menu Mode": menu_mode_basic_button_codes | {
         "XButton": (None, 0x07),
