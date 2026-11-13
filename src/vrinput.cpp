@@ -73,7 +73,7 @@ namespace {
 		}
 	}
 
-	// TODO: contribute this to commonlib-ng BSInputDeviceManager.h, I guess
+	// TODO: https://github.com/alandtse/CommonLibSSE-NG/pull/508
 	void RefreshVRControllerDevices(RE::BSInputDeviceManager *manager) {
 		using func_t = void (*)(RE::BSInputDeviceManager *);
 		static REL::Relocation<func_t> func{ REL::Offset(0xC51D30) };

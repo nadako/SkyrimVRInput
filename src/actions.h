@@ -158,7 +158,6 @@ namespace actionData {
 		"/actions/imgui",
 	};
 
-	// TODO: check codes against RE::BSOpenVRControllerDevice::Keys so we don't break things like RE::BSOpenVRControllerDevice::IsGripButton and similar
 	inline constexpr ActionDef defs[] = {
 		// @formatter:off preserve table layout
 		// NOTE: PLANCK (activeragdoll) relies on the left (right in left-handed mode) aka secondary controller's first joystick input to determine movement for power attacks!
@@ -209,7 +208,7 @@ namespace actionData {
 		{"/actions/gameplay/in/SecondaryThumbTouch",   {kContext_Gameplay, 0}, ActionTypeTouch, {ConSecondary, KnownButtons::Joystick}},
 
 		// TODO: Hotkey(1-8) buttons - do they work in VR? if so they could be used for mods in addition to Axis3/Axis4
-		// TODO: we should probably have a separate set for item menus, in which one could e.g. bind Left/Right to the same buttons as journal TabLeft/TabRight for consistency
+		// TODO: we should probably have a separate set for item menus, in which one could e.g. bind Left/Right to the same buttons as journal TabLeft/TabRight for consistency (but check if that only makes sense for SkyUI)
 		// NOTE: this is placed above Accept, so it can take priority if used within the same context
 		{"/actions/menu/in/EquipPrimary",      {kContext_ItemMenu, StackedActions::MenuSelect}, ActionTypeButton, {ConPrimary,   KnownButtons::Trigger}},
 		{"/actions/menu/in/EquipSecondary",    {kContext_ItemMenu, StackedActions::MenuSelect}, ActionTypeButton, {ConSecondary, KnownButtons::Trigger}},
