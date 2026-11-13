@@ -159,7 +159,6 @@ namespace actionData {
 	};
 
 	// TODO: check codes against RE::BSOpenVRControllerDevice::Keys so we don't break things like RE::BSOpenVRControllerDevice::IsGripButton and similar
-	// TODO: what is Favor context, it has the cancel button, check and bind. is it the follower "i want you to do something one?"
 	inline constexpr ActionDef defs[] = {
 		// @formatter:off preserve table layout
 		// NOTE: PLANCK (activeragdoll) relies on the left (right in left-handed mode) aka secondary controller's first joystick input to determine movement for power attacks!
@@ -306,7 +305,23 @@ namespace actionData {
 		// race/sex menu has the same tab buttons as journal
 		{"/actions/menu/in/TabLeft",  kContext_RaceSexMenu},
 		{"/actions/menu/in/TabRight", kContext_RaceSexMenu},
+
+		// favor is not a menu per se, but it would make sense to reuse the cancel button
+		// TODO: consider using a unique button code for cancel everywhere, so it never clashes with Grip
+		{"/actions/menu/in/Cancel", kContext_Favor},
 		// @formatter:on
+	};
+
+	// inherited contexts are contexts that the game pushes right above their parent. they inherit all the parent's actions
+	// including topOnly and they are ignored for the context stack generation, so actions pressed in the parent stay pressed
+	// when the inherited context is pushed on top
+	// TODO: this is only really used to make Favor work like "Gameplay with Cancel". this might not be worth introducing the new concept and could be just hard-coded, let's see
+	struct InheritedContext {
+		GameInputContext context;
+		GameInputContext parent;
+	};
+	inline constexpr InheritedContext inheritedContexts[] = {
+		{kContext_Favor, kContext_Gameplay},
 	};
 
 	constexpr auto movementActionIndices = [] {

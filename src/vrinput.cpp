@@ -185,6 +185,13 @@ namespace {
 		return false;
 	}
 
+	bool IsInheritedContext(GameInputContext context, GameInputContext parent) {
+		for (auto &inheritance: actionData::inheritedContexts) {
+			if (inheritance.context == context && inheritance.parent == parent) return true;
+		}
+		return false;
+	}
+
 	// i guess this is the not most optimized, but we normally should have like up to 5 contexts, so it shouldn't matter
 	uint32_t CalculateContextStackGeneration(std::span<GameInputContext> contextStack) {
 		static uint32_t contextStackGeneration = 0;
@@ -201,6 +208,7 @@ namespace {
 			// it shouldn't matter though and we can treat them as one for the sake of stack comparison,
 			// but we keep any other duplicates as they can be legit (e.g. MenuMode->MenuMode for confirmation menus, like level-up)
 			if (contextId == kContext_Gameplay && !currentStack.empty() && currentStack.back() == kContext_Gameplay) continue;
+			if (!currentStack.empty() && IsInheritedContext(contextId, currentStack.back())) continue;
 			currentStack.push_back(contextId);
 		}
 
@@ -276,6 +284,14 @@ bool InitVRInput() {
 			if (strcmp(additionalActionContext.name, actionDef.name) == 0) {
 				auto &additionalContextActions = actionsPerContext[additionalActionContext.context];
 				additionalContextActions.push_back(actionIndex);
+			}
+		}
+
+		if (actionDef.context.topOnly) {
+			for (auto &inheritance: actionData::inheritedContexts) {
+				if (inheritance.parent == actionDef.context.contextId) {
+					actionsPerContext[inheritance.context].push_back(actionIndex);
+				}
 			}
 		}
 

@@ -1,3 +1,7 @@
+## 0.5.1 - 2026-11-13
+
+- Fixed follower's favor interaction ("I want you to do something" dialogue option, or holding "Activate" on them). It uses Menu Cancel action for cancelling the favor.
+
 ## 0.5.0 - 2026-11-12
 
 - Added support for left-handed mode. When using it, you need to also switch to the left-handed bindings in SteamVR (mirrored Frame/Index default bindings are provided).

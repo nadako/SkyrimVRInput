@@ -105,7 +105,9 @@ button_codes = {
         "RotateLock": (0x0c, None),
         "Cancel": (0x02, None),
     },
-    "Favor": {},
+    "Favor": {
+        "Cancel": (0x02, None),
+    },
     "Crafting Menus": item_zoom_rotate_button_codes,
     "Barter Menus": item_zoom_rotate_button_codes, # these were absent from controlmapvr.txt, I added them and they work just fine \o/
     "Race Sex Menu": tab_left_right_button_codes | {

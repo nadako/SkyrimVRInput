@@ -230,7 +230,7 @@ Cancel					!0,Tween Menu,!0,Pause								!0,Tween Menu,!0,Pause								!0,Tween 
 Cancel Alt				0xff												0xff												0xff				0xff		0xff		0xff									0xff								0xff		0xff		0	0	0	0	0	0	0	0	0	0x8
 
 // Favor																															(Vive----------------------)			(Oculus-------------------------------------)								(Windows MR-----)												
-Cancel					!0,Tween Menu,!0,Pause					!0,Tween Menu,!0,Pause					!0,Tween Menu				0xff				0xff			0xff									0xff								0xff		0xff		0	0	0	0	0	0	0	0	0	0x108
+Cancel					!0,Tween Menu,!0,Pause					!0,Tween Menu,!0,Pause					!0,Tween Menu				0xff				0xff			0x02									0xff								0xff		0xff		0	0	0	0	0	0	0	0	0	0x108
 
 // Crafting Menus																													(Vive----------------------)			(Oculus-------------------------------------)								(Windows MR-----)												
 Accept					!0,Activate								!0,Activate							!0,Activate						0xff					0xff			0xff		0xff	0xff		0xff		0	0	0	0	0	0	0	0	0	0x8	
