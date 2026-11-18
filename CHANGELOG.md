@@ -1,3 +1,7 @@
+## 0.5.3 - UNRELEASED
+
+- Enabled link-time optimizations. Shouldn't break anything, but also unlikely to have noticeable difference.
+
 ## 0.5.2 - 2026-11-13
 
 - Added Skyrim's Hotkey 1-8 actions. In the base game they work similarly as in non-VR (assign hotkey in favorites, then press in-game to equip), some mods make more use of them.

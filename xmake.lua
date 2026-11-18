@@ -1,4 +1,4 @@
-local version = "0.5.2"
+local version = "0.5.3"
 
 set_project("skyrim_vrinput")
 set_version(version)
@@ -9,6 +9,7 @@ set_warnings("allextra")
 
 add_rules("mode.debug", "mode.releasedbg")
 set_defaultmode("releasedbg")
+set_policy("build.optimization.lto", true) -- don't lose optimizations just because stuff is in different files
 
 add_rules("plugin.compile_commands.autoupdate")
 
