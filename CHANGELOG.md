@@ -1,5 +1,6 @@
-## 0.5.3 - UNRELEASED
+## 0.5.3 - 2026-11-24
 
+- Fixed Race Sex Menu not reacting on "Finish and Name Character" confirmation.
 - Enabled link-time optimizations. Shouldn't break anything, but also unlikely to have noticeable difference.
 
 ## 0.5.2 - 2026-11-13

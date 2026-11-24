@@ -60,6 +60,20 @@ namespace {
 		heldDownSecs = 0.0f;
 	}
 
+	// RaceSexMenu is weird: to decide whether to show the keyboard it expects the "Accept" button _release_ event, that we would normally consider "orphan",
+	// because it comes from the just-closed confirmation dialogue menu, spawned by the RaceSexMenu. so we should not swallow the "orphan" release in this case
+	bool IsRaceSexMenuWaitingForAcceptRelease(RE::ButtonEvent *button) {
+		if (button->GetUserEvent() != RE::UserEvents::GetSingleton()->accept) return false;
+		auto menu = RE::UI::GetSingleton()->GetMenu<RE::RaceSexMenu>();
+		if (!menu) return false;
+
+		struct RaceSexMenuVR {
+			uint8_t _pad[0x15D];
+			bool showVirtualKeyboardPending; // set in the scaleform callback at 0x8debfc, checked at 0x8e1073 in RaceSexMenu's ProcessButton then reset at 0x8e1180
+		};
+		return ((RaceSexMenuVR *) menu.get())->showVirtualKeyboardPending;
+	}
+
 	// NOTE: the MenuControls::ProcessEvent hook will effectively change events for everyone, because MenuControls is the first sink
 	RE::BSEventNotifyControl Hook_MenuControlsProcessEvent(RE::MenuControls *self, RE::InputEvent *const *events, RE::BSTEventSource<RE::InputEvent *> *source) {
 		for (auto event = events ? *events : nullptr; event; event = event->next) {
@@ -71,10 +85,10 @@ namespace {
 
 			// swallow "orphan" button releases coming from actions that are still pressed but don't contribute to the controller state button mask anymore
 			// it is needed to avoid confusing Scaleform menus with button-up events "out of nowhere"
-			if (button->IsUp() && IsOrphanControllerButtonRelease(column, button->GetIDCode())) {
+			if (button->IsUp() && IsOrphanControllerButtonRelease(column, button->GetIDCode()) && !IsRaceSexMenuWaitingForAcceptRelease(button)) {
 				if (spdlog::should_log(spdlog::level::debug))
 					logger::debug("Ignoring UI button release user event of a button pressed in another input context: device={} code={:#x} userEvent='{}'",
-								  (int) event->GetDevice(), button->GetIDCode(), button->GetUserEvent().c_str());
+					              (int) event->GetDevice(), button->GetIDCode(), button->GetUserEvent().c_str());
 				button->SetUserEvent(RE::BSFixedString{});
 				continue;
 			}
@@ -83,7 +97,7 @@ namespace {
 			if (IsPreventedMenuUserEventControllerButton(column, button->GetIDCode())) {
 				if (spdlog::should_log(spdlog::level::debug))
 					logger::debug("Ignoring UI button user event of an action that prevents menu user events: device={} code={:#x} userEvent='{}'",
-								  (int) event->GetDevice(), button->GetIDCode(), button->GetUserEvent().c_str());
+					              (int) event->GetDevice(), button->GetIDCode(), button->GetUserEvent().c_str());
 				button->SetUserEvent(RE::BSFixedString{});
 			}
 		}

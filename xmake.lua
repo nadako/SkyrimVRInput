@@ -48,6 +48,7 @@ target("skyrim_vrinput")
         local target_dirs = {
             --"C:/SteamLibrary/steamapps/common/SkyrimVR/Data",
             "C:/Games/MySkyrimVR/modlist/mods/SkyrimVRInput",
+            "C:/Games/NewSkyrimVR/mods/SkyrimVRInput",
             "C:/Games/SkyrimVRForMod/mods/SkyrimVRInput",
             dist_mod_dir,
         }
